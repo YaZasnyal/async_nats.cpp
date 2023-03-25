@@ -1,0 +1,24 @@
+[package]
+name = "nats_fabric"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# crate-type = ["cdylib"]
+crate-type = ["staticlib"]
+
+# [build]
+# rustflags = "-Clink-arg=-Wl,-soname=libfoo.so.0"
+
+[profile.release]
+debug = 1
+
+[dependencies]
+tokio = {version = "1.26.0", features = ["rt-multi-thread"]}
+async-nats = "0.28.0"
+# async-nats = { path = "../../nats.rs/async-nats" }
+bytes = "1.4.0"
+futures = "0.3.27"
+# kanal = "0.1.0-pre8"
