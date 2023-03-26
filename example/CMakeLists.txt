@@ -20,6 +20,6 @@ function(add_example NAME)
   add_dependencies(run-examples "run_${NAME}")
 endfunction()
 
-add_example(empty_example)
+add_example(cpp20_coro_send)
 
 add_folders(Example)
