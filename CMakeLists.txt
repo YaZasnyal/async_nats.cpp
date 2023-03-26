@@ -61,6 +61,7 @@ target_compile_features(async_nats_async_nats PUBLIC cxx_std_17)
 # ---- Dependencies ----
 
 find_package(fmt REQUIRED)
+find_package(Boost REQUIRED)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -75,6 +76,15 @@ target_link_libraries(async_nats_async_nats
   PRIVATE
   fmt::fmt
   nats_fabric
+
+  PUBLIC
+  Boost::boost
+
+  # windows
+  $<$<BOOL:${WIN32}>:ntdll>
+  $<$<BOOL:${WIN32}>:Crypt32>
+  $<$<BOOL:${WIN32}>:Ncrypt>
+  $<$<BOOL:${WIN32}>:Secur32>
 )
 
 

@@ -1,5 +1,5 @@
 /// This file contains common api structs
-use std::ffi::{c_char, CStr};
+use std::ffi::{c_char, c_ulonglong, CStr};
 
 pub trait LossyConvert {
     fn lossy_convert(&self) -> String;
@@ -19,6 +19,35 @@ impl LossyConvert for BorrowedString {
         unsafe { CStr::from_ptr(*self) }.lossy_convert()
     }
 }
+
+// OwnedString is a C-string whose lifetime is passed between the API bondary
+pub type OwnedString = *mut c_char;
+
+// AsyncString is a C-string which must be valid untill a callback is called  
+pub type AsyncString = *mut c_char;
+impl LossyConvert for AsyncString {
+    fn lossy_convert(&self) -> String {
+        unsafe { CStr::from_ptr(*self) }.lossy_convert()
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn async_nats_owned_string_delete(s: OwnedString) {
+    unsafe {
+        drop(Box::from_raw(s));
+    }
+}
+
+/// BorrowedMessage represents a byte stream with a lifetime limited to a 
+/// specific function call.
+#[repr(C)]
+#[derive(Debug)]
+pub struct BorrowedMessage(pub *const c_char, pub c_ulonglong);
+
+/// AsyncMessage represents a byte stream with a lifetime limited to a
+/// specific async call and should be valid until a callback is called
+pub type AsyncMessage = BorrowedMessage;
+unsafe impl Send for AsyncMessage {}
 
 #[repr(C)]
 #[derive(Debug)]
@@ -102,21 +131,5 @@ impl<T: Default> Optional<T> {
             has_value: false,
             value: T::default(),
         }
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn async_nats_owned_string_delete(s: *mut str) {
-    unsafe {
-        drop(Box::from_raw(s));
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn async_nats_owned_string_data(s: *const str) -> Slice {
-    let s = unsafe{&*s};
-    Slice {
-        data: s.as_ptr(),
-        size: s.len() as u64,
     }
 }
