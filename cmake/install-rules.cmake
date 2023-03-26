@@ -20,7 +20,7 @@ install(
 )
 
 install(
-    TARGETS async_nats_async_nats
+    TARGETS async_nats_async_nats nats_fabric
     EXPORT async_natsTargets
     RUNTIME #
     COMPONENT async_nats_Runtime

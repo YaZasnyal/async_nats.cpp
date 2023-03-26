@@ -24,12 +24,15 @@ impl LossyConvert for BorrowedString {
 #[derive(Debug)]
 pub struct Slice {
     data: *const u8,
-    size: u64
+    size: u64,
 }
 
 impl Default for Slice {
     fn default() -> Self {
-        Self { data: std::ptr::null(), size: Default::default() }
+        Self {
+            data: std::ptr::null(),
+            size: Default::default(),
+        }
     }
 }
 
@@ -51,7 +54,7 @@ pub extern "C" fn nats_message_topic(msg: *const NatsMessage) -> Slice {
     let msg = unsafe { &*msg };
     Slice {
         data: msg.subject.as_ptr(),
-        size: msg.subject.len() as u64
+        size: msg.subject.len() as u64,
     }
 }
 
@@ -62,20 +65,58 @@ pub extern "C" fn nats_message_data(msg: *const NatsMessage) -> Slice {
     let msg = unsafe { &*msg };
     Slice {
         data: msg.payload.as_ptr(),
-        size: msg.payload.len() as u64
+        size: msg.payload.len() as u64,
     }
 }
 
 #[no_mangle]
 pub extern "C" fn nats_message_reply_to(msg: *const NatsMessage) -> Slice {
     let msg = unsafe { &*msg };
-    
+
     let Some(reply) = &msg.reply else {
         return Slice::default();
     };
 
     Slice {
         data: reply.as_ptr(),
-        size: reply.len() as u64
+        size: reply.len() as u64,
+    }
+}
+
+#[repr(C)]
+pub struct Optional<T> {
+    has_value: bool,
+    value: T,
+}
+
+impl<T: Default> Optional<T> {
+    pub fn some(val: T) -> Self {
+        Self {
+            has_value: true,
+            value: val,
+        }
+    }
+
+    pub fn none() -> Self {
+        Self {
+            has_value: false,
+            value: T::default(),
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn async_nats_owned_string_delete(s: *mut str) {
+    unsafe {
+        drop(Box::from_raw(s));
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn async_nats_owned_string_data(s: *const str) -> Slice {
+    let s = unsafe{&*s};
+    Slice {
+        data: s.as_ptr(),
+        size: s.len() as u64,
     }
 }
