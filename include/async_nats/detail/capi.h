@@ -28,7 +28,8 @@ void async_nats_owned_string_delete(AsyncNatsOwnedString);
 
 typedef const char* AsyncNatsAsyncString;
 
-struct AsyncNatsOptionalI32 {
+struct AsyncNatsOptionalI32
+{
   bool has_value;
   int32_t value;
 };
@@ -70,8 +71,11 @@ void async_nats_connection_config_name(AsyncNatsConnectionConfig* cfg, const cha
 void async_nats_connection_config_addr(AsyncNatsConnectionConfig* cfg, const char* addr);
 
 struct AsyncNatsConnection;
-//AsyncNatsConnection* async_nats_connection_new(const AsyncNatsConnectionConfig* cfg);
-typedef void (*AsyncNatsConnectCallbackFunction)(AsyncNatsConnection* msg, AsyncNatsIoError err, void*);
+struct AsyncNatsSubscription;
+// AsyncNatsConnection* async_nats_connection_new(const AsyncNatsConnectionConfig* cfg);
+typedef void (*AsyncNatsConnectCallbackFunction)(AsyncNatsConnection* msg,
+                                                 AsyncNatsIoError err,
+                                                 void*);
 struct AsyncNatsConnectCallback
 {
   AsyncNatsConnectCallbackFunction f;  ///< @brief callback function
@@ -84,7 +88,8 @@ AsyncNatsConnection* async_nats_connection_clone(const AsyncNatsConnection* conn
 void async_nats_connection_delete(AsyncNatsConnection* conn);
 
 typedef void (*AsyncNatsPublishCallbackFunction)(void*);
-struct AsyncNatsPublishCallback {
+struct AsyncNatsPublishCallback
+{
   AsyncNatsPublishCallbackFunction f;  ///< @brief callback function
   void* closure;  ///< @brief data to be passed back
 };
@@ -93,12 +98,18 @@ void async_nats_connection_publish_async(const AsyncNatsConnection* conn,
                                          AsyncNatsAsyncMessage message,
                                          AsyncNatsPublishCallback cb);
 
-//// new_inbox
-//// request
-// subscribe
-
-
-// TODO connection
+/// -- Subscribe --
+typedef void (*AsyncNatsSubscribeCallbackFunction)(AsyncNatsSubscription* sub,
+                                                   AsyncNatsOwnedString err,
+                                                   void*);
+struct AsyncNatsSubscribeCallback
+{
+  AsyncNatsSubscribeCallbackFunction f;  ///< @brief callback function
+  void* closure;  ///< @brief data to be passed back
+};
+void async_nats_connection_subscribe_async(const AsyncNatsConnection* conn,
+                                           AsyncNatsAsyncString topic,
+                                           AsyncNatsSubscribeCallback cb);
 
 /// ---- NatsMessage ----
 struct AsyncNatsMessage;
@@ -108,21 +119,15 @@ AsyncNatsSlice async_nats_message_data(const AsyncNatsMessage* msg);
 AsyncNatsSlice async_nats_message_reply_to(const AsyncNatsMessage* msg);
 
 /// ---- Subscription ----
-//struct AsyncNatsSubscription;
-//typedef void (*RecieveCallbackFunction)(AsyncNatsMessage* msg, void*);
-//struct AsyncNatsRecieveCallback
-//{
-//  RecieveCallbackFunction f;  ///< @brief callback function
-//  void* closure;  ///< @brief data to be passed back
-//};
-//AsyncNatsSubscription* async_nats_subscribtion_create(const AsyncNatsRuntime* rt,
-//                                                      const char* topic);
-//void async_nats_subscribtion_delete(AsyncNatsSubscription* chan);
-//bool async_nats_subscribtion_is_open(const AsyncNatsSubscription* chan);
-//// AsyncNatsMessage* async_nats_subscribtion_try_recv(AsyncNatsSubscription* chan);
-//AsyncNatsMessage* async_nats_subscribtion_recv(AsyncNatsSubscription* chan);
-//void async_nats_subscribtion_recv_async(AsyncNatsSubscription* chan, AsyncNatsRecieveCallback cb);
-//// void async_nats_subscribtion_bench(Subscription* chan, uint64_t count);
+void async_nats_subscribtion_delete(AsyncNatsSubscription* sub);
+typedef void (*RecieveCallbackFunction)(AsyncNatsMessage* msg, void*);
+struct AsyncNatsRecieveCallback
+{
+  RecieveCallbackFunction f;  ///< @brief callback function
+  void* closure;  ///< @brief data to be passed back
+};
+void async_nats_subscribtion_receive_async(AsyncNatsSubscription* chan,
+                                           AsyncNatsRecieveCallback cb);
 
 /// ---- JetStream ----
 

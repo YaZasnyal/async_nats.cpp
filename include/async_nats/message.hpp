@@ -17,16 +17,20 @@ public:
   {
   }
 
+  Message(const Message&) = delete;
+  Message(Message&& o)
+  {
+    message_ = o.message_;
+    o.message_ = nullptr;
+  }
+
   ~Message()
   {
-    if(message_)
+    if (message_)
       async_nats_message_delete(message_);
   }
 
-  operator bool() const
-  {
-    return message_ != nullptr;
-  }
+  operator bool() const { return message_ != nullptr; }
 
   std::string_view Topic() const
   {
@@ -43,12 +47,9 @@ public:
   std::optional<std::string_view> ReplyTo() const
   {
     auto slice = async_nats_message_reply_to(message_);
-    if(slice.data)
-    {
+    if (slice.data) {
       return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
-    }
-    else
-    {
+    } else {
       return std::nullopt;
     }
   }

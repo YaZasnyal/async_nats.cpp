@@ -1,10 +1,11 @@
 use crate::tokio_runtime::TokioRuntime;
 
-use crate::api::{AsyncMessage, AsyncString, BorrowedString, LossyConvert};
+use crate::api::{AsyncMessage, AsyncString, BorrowedString, LossyConvert, OwnedString};
 use crate::error::io_error_convert;
+use crate::subscribtion::{SubscribtionWrapper};
 use async_nats::{connect_with_options, Client, ConnectOptions, ServerAddr};
 use core::slice;
-use std::ffi::{c_char, c_ulonglong, c_void};
+use std::ffi::c_void;
 
 #[derive(Clone)]
 pub struct Connection {
@@ -85,15 +86,52 @@ pub extern "C" fn async_nats_connection_publish_async(
 ) {
     let conn = unsafe { &*conn };
     let topic_str = topic.lossy_convert();
-    let data_slice =
-        unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
-    let bytes = bytes::Bytes::from_static(data_slice);
 
     conn.rt.spawn(async move {
-        let _data_slice = data_slice;
         let cb = cb.clone();
+        let message = message;
+        let data_slice =
+            unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
+        let bytes = bytes::Bytes::from_static(data_slice);
         conn.client.publish(topic_str, bytes).await.ok();
         cb.0(cb.1);
+    });
+}
+
+#[repr(C)]
+#[derive(Debug, Clone)]
+pub struct SubscribeCallback(
+    extern "C" fn(sub: *mut SubscribtionWrapper, err: OwnedString, d: *mut c_void),
+    *mut c_void,
+);
+unsafe impl Send for SubscribeCallback {}
+
+#[no_mangle]
+extern "C" fn async_nats_connection_subscribe_async(
+    conn: *const Connection,
+    topic: AsyncString,
+    cb: SubscribeCallback,
+) {
+    let conn = unsafe { &*conn };
+    let topic_str = topic.lossy_convert();
+
+    let rt = conn.rt.clone();
+    conn.rt.spawn(async move {
+        let cb = cb;
+        let sub = conn.client.subscribe(topic_str).await;
+
+        match sub {
+            Ok(sub) => {
+                let sub = Box::new(SubscribtionWrapper::new(rt, sub));
+                cb.0(Box::into_raw(sub), std::ptr::null_mut(), cb.1);
+            }
+            Err(e) => {
+                // TODO: replace with more specific error when it is implemented in async_nats.rs
+                let err = std::ffi::CString::new(e.to_string().as_bytes())
+                    .expect("Unable to convert error into CString");
+                cb.0(std::ptr::null_mut(), std::ffi::CString::into_raw(err), cb.1);
+            }
+        }
     });
 }
 

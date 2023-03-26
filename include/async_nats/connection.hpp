@@ -3,11 +3,12 @@
 #include <string>
 #include <string_view>
 
-#include "boost/asio/buffer.hpp"
 #include <boost/asio/async_result.hpp>
+#include <boost/asio/buffer.hpp>
 #include <boost/system/error_code.hpp>
 
 #include "async_nats/detail/capi.h"
+#include "async_nats/subscribtion.hpp"
 #include "async_nats/tokio_runtime.hpp"
 
 namespace async_nats
@@ -17,10 +18,7 @@ class ConnectionErrorCategory : public boost::system::error_category
 {
   // error_category interface
 public:
-  const char *name() const noexcept override
-  {
-    return "async_asio_connection_error";
-  }
+  const char* name() const noexcept override { return "async_asio_connection_error"; }
 
   std::string message(int ev) const override
   {
@@ -33,8 +31,7 @@ public:
   boost::system::error_condition default_error_condition(int ev) const noexcept override
   {
     auto code = async_nats_io_error_system_code(ev);
-    if(!code.has_value)
-    {
+    if (!code.has_value) {
       return boost::system::error_condition(ev, *this);
     }
     return boost::system::error_condition(code.value, boost::system::system_category());
@@ -56,7 +53,6 @@ inline boost::system::error_condition make_error_condition(int e)
 {
   return boost::system::error_condition(e, zstd_error_category());
 }
-
 
 class ConnectionOptions
 {
@@ -98,7 +94,8 @@ public:
 
   Connection(const Connection& o) { conn_ = async_nats_connection_clone(o.get_raw()); }
 
-  Connection(Connection&& o) {
+  Connection(Connection&& o)
+  {
     conn_ = o.conn_;
     o.conn_ = nullptr;
   }
@@ -145,8 +142,32 @@ public:
           cb);
     };
 
-    return boost::asio::async_initiate<CompletionToken, void()>(
-        init, token);
+    return boost::asio::async_initiate<CompletionToken, void()>(init, token);
+  }
+
+  template<class CompletionToken>
+  auto subcribe(std::string_view topic, CompletionToken&& token)
+  {
+    auto init = [&](auto token)
+    {
+      using CH = std::decay_t<decltype(token)>;
+
+      static auto f = [](AsyncNatsSubscription* sub, AsyncNatsOwnedString /*err*/, void* ctx)
+      {
+        auto c = static_cast<CH*>(ctx);
+        (*c)(Subscribtion(sub));
+        delete c;
+      };
+
+      auto ctx = new CH(std::move(token));
+      ::AsyncNatsSubscribeCallback cb {f, ctx};
+      async_nats_connection_subscribe_async(
+          get_raw(),
+          topic.data(),
+          cb);
+    };
+
+    return boost::asio::async_initiate<CompletionToken, void(Subscribtion)>(init, token);
   }
 
 private:
@@ -163,12 +184,9 @@ auto connect(const TokioRuntime& rt, const ConnectionOptions& options, Completio
     static auto f = [](AsyncNatsConnection* conn, AsyncNatsIoError e, void* ctx)
     {
       auto c = static_cast<CH*>(ctx);
-      if(!conn)
-      {
+      if (!conn) {
         (*c)(make_error_code(e), Connection(conn));
-      }
-      else
-      {
+      } else {
         (*c)(boost::system::error_code(), Connection(conn));
       }
 
