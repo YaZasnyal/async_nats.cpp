@@ -15,9 +15,9 @@ include(cmake/variables.cmake)
 
 # ---- Declare library ----
 
-add_library(async_nats_async_nats)
+add_library(async_nats_async_nats INTERFACE)
 
-file(GLOB_RECURSE SOURCES source/*.cpp include/*.h include/*.hpp)
+file(GLOB_RECURSE SOURCES include/*.h include/*.hpp)
 message("${SOURCES}")
 target_sources(async_nats_async_nats PRIVATE ${SOURCES})
 add_library(async_nats::async_nats ALIAS async_nats_async_nats)
@@ -29,10 +29,6 @@ generate_export_header(
     EXPORT_FILE_NAME export/async_nats/async_nats_export.hpp
     CUSTOM_CONTENT_FROM_VARIABLE pragma_suppress_c4251
 )
-
-if(NOT BUILD_SHARED_LIBS)
-  target_compile_definitions(async_nats_async_nats PUBLIC ASYNC_NATS_STATIC_DEFINE)
-endif()
 
 set_target_properties(
     async_nats_async_nats PROPERTIES
@@ -46,17 +42,17 @@ set_target_properties(
 
 target_include_directories(
     async_nats_async_nats ${warning_guard}
-    PUBLIC
+    INTERFACE
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
 )
 
 target_include_directories(
     async_nats_async_nats SYSTEM
-    PUBLIC
+    INTERFACE
     "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>"
 )
 
-target_compile_features(async_nats_async_nats PUBLIC cxx_std_17)
+target_compile_features(async_nats_async_nats INTERFACE cxx_std_17)
 
 # ---- Dependencies ----
 
@@ -73,12 +69,9 @@ FetchContent_MakeAvailable(Corrosion)
 corrosion_import_crate(MANIFEST_PATH ${CMAKE_CURRENT_LIST_DIR}/rust/Cargo.toml)
 
 target_link_libraries(async_nats_async_nats
-  PRIVATE
-  fmt::fmt
-  nats_fabric
-
-  PUBLIC
+  INTERFACE
   Boost::boost
+  nats_fabric
 
   # windows
   $<$<BOOL:${WIN32}>:ntdll>
