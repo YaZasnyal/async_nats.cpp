@@ -11,9 +11,12 @@ namespace async_nats
 class Subscribtion
 {
 public:
+  Subscribtion() = default;
+
   Subscribtion(AsyncNatsSubscription* sub)
       : sub_(sub)
-  {}
+  {
+  }
 
   Subscribtion(const Subscribtion&) = delete;
   Subscribtion(Subscribtion&& o)
@@ -24,14 +27,25 @@ public:
 
   ~Subscribtion()
   {
-    if(sub_)
+    if (sub_)
       async_nats_subscribtion_delete(sub_);
   }
 
-  operator bool() const
+  Subscribtion& operator=(const Subscribtion&) = delete;
+  Subscribtion& operator=(Subscribtion&& o)
   {
-    return sub_ != nullptr;
+    if (this == &o)
+      return *this;
+
+    if (sub_)
+      async_nats_subscribtion_delete(sub_);
+    sub_ = o.sub_;
+    o.sub_ = nullptr;
+
+    return *this;
   }
+
+  operator bool() const { return sub_ != nullptr; }
 
   AsyncNatsSubscription* get_raw() { return sub_; }
 
@@ -51,16 +65,14 @@ public:
 
       auto ctx = new CH(std::move(token));
       ::AsyncNatsRecieveCallback cb {f, ctx};
-      async_nats_subscribtion_receive_async(
-          get_raw(),
-          cb);
+      async_nats_subscribtion_receive_async(get_raw(), cb);
     };
 
     return boost::asio::async_initiate<CompletionToken, void(Message)>(init, token);
   }
 
 private:
-  AsyncNatsSubscription* sub_;
+  AsyncNatsSubscription* sub_ = nullptr;
 };
 
-}
+}  // namespace async_nats

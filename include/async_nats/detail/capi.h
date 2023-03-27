@@ -72,7 +72,6 @@ void async_nats_connection_config_addr(AsyncNatsConnectionConfig* cfg, const cha
 
 struct AsyncNatsConnection;
 struct AsyncNatsSubscription;
-// AsyncNatsConnection* async_nats_connection_new(const AsyncNatsConnectionConfig* cfg);
 typedef void (*AsyncNatsConnectCallbackFunction)(AsyncNatsConnection* msg,
                                                  AsyncNatsIoError err,
                                                  void*);

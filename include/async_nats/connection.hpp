@@ -87,6 +87,8 @@ private:
 class Connection
 {
 public:
+  Connection() = default;
+
   Connection(AsyncNatsConnection* conn)
       : conn_(conn)
   {
@@ -105,6 +107,33 @@ public:
     if (conn_) {
       async_nats_connection_delete(conn_);
     }
+  }
+
+  Connection& operator=(const Connection& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (conn_) {
+      async_nats_connection_delete(conn_);
+    }
+    conn_ = async_nats_connection_clone(o.get_raw());
+
+    return *this;
+  }
+
+  Connection& operator=(Connection&& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (conn_) {
+      async_nats_connection_delete(conn_);
+    }
+    conn_ = o.conn_;
+    o.conn_ = nullptr;
+
+    return *this;
   }
 
   operator bool() const { return conn_ != nullptr; }
@@ -161,17 +190,14 @@ public:
 
       auto ctx = new CH(std::move(token));
       ::AsyncNatsSubscribeCallback cb {f, ctx};
-      async_nats_connection_subscribe_async(
-          get_raw(),
-          topic.data(),
-          cb);
+      async_nats_connection_subscribe_async(get_raw(), topic.data(), cb);
     };
 
     return boost::asio::async_initiate<CompletionToken, void(Subscribtion)>(init, token);
   }
 
 private:
-  AsyncNatsConnection* conn_;
+  AsyncNatsConnection* conn_ = nullptr;
 };
 
 template<class CompletionToken>

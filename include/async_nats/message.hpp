@@ -12,6 +12,8 @@ namespace async_nats
 class ASYNC_NATS_EXPORT Message
 {
 public:
+  Message() = default;
+
   Message(AsyncNatsMessage* message)
       : message_(message)
   {
@@ -28,6 +30,20 @@ public:
   {
     if (message_)
       async_nats_message_delete(message_);
+  }
+
+  Message& operator=(const Message& o) = delete;
+  Message& operator=(Message&& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (message_)
+      async_nats_message_delete(message_);
+    message_ = o.message_;
+    o.message_ = nullptr;
+
+    return *this;
   }
 
   operator bool() const { return message_ != nullptr; }
@@ -55,7 +71,7 @@ public:
   }
 
 private:
-  AsyncNatsMessage* message_;
+  AsyncNatsMessage* message_ = nullptr;
 };
 
 }  // namespace async_nats
