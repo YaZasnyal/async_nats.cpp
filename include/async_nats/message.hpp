@@ -3,13 +3,12 @@
 #include <optional>
 #include <string_view>
 
-#include "async_nats/async_nats_export.hpp"
 #include "async_nats/detail/capi.h"
 
 namespace async_nats
 {
 
-class ASYNC_NATS_EXPORT Message
+class Message
 {
 public:
   Message() = default;
