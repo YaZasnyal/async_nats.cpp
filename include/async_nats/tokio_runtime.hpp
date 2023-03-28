@@ -37,18 +37,42 @@ private:
 class TokioRuntime
 {
 public:
-  TokioRuntime()
-  {
-    TokioRuntimeConfig cfg;
-    rt_ = async_nats_tokio_runtime_new(cfg.get_raw());
-  }
-
-  TokioRuntime(const TokioRuntimeConfig& cfg)
+  TokioRuntime(const TokioRuntimeConfig& cfg = TokioRuntimeConfig())
   {
     rt_ = async_nats_tokio_runtime_new(cfg.get_raw());
   }
 
-  ~TokioRuntime() { async_nats_tokio_runtime_delete(rt_); }
+  TokioRuntime(const TokioRuntime&) = delete;
+
+  TokioRuntime(TokioRuntime&& o)
+  {
+    rt_ = o.rt_;
+    o.rt_ = nullptr;
+  }
+
+  ~TokioRuntime()
+  {
+    if (rt_)
+      async_nats_tokio_runtime_delete(rt_);
+  }
+
+  TokioRuntime& operator=(const TokioRuntime&) = delete;
+
+  TokioRuntime& operator=(TokioRuntime&& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (rt_)
+      async_nats_tokio_runtime_delete(rt_);
+
+    rt_ = o.rt_;
+    o.rt_ = nullptr;
+
+    return *this;
+  }
+
+  operator bool() const { return rt_ != nullptr; }
 
   AsyncNatsTokioRuntime* get_raw() { return rt_; }
 
