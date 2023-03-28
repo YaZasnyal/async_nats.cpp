@@ -92,7 +92,7 @@ pub extern "C" fn async_nats_connection_publish_async(
         let message = message;
         let data_slice =
             unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
-        let bytes = bytes::Bytes::from_static(data_slice);
+        let bytes = bytes::Bytes::copy_from_slice(data_slice);
         conn.client.publish(topic_str, bytes).await.ok();
         cb.0(cb.1);
     });
