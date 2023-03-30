@@ -74,8 +74,6 @@ public:
 
   operator bool() const { return rt_ != nullptr; }
 
-  AsyncNatsTokioRuntime* get_raw() { return rt_; }
-
   const AsyncNatsTokioRuntime* get_raw() const { return rt_; }
 
 private:

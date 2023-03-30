@@ -5,9 +5,7 @@
 
 #ifdef __cplusplus
 #  define EXTERN_C extern "C"
-#  define EXTERN_C_BEGIN \
-    extern "C" \
-    {
+#  define EXTERN_C_BEGIN extern "C" {
 #  define EXTERN_C_END }
 #else
 #  define EXTERN_C /* Nothing */
@@ -26,6 +24,13 @@ struct AsyncNatsSlice
 typedef char* AsyncNatsOwnedString;
 void async_nats_owned_string_delete(AsyncNatsOwnedString);
 
+/**
+ * @brief AsyncNatsBorrowedString can be removed after function call
+ */
+typedef const char* AsyncNatsBorrowedString;
+/**
+ * @brief AsyncNatsAsyncString must live long enough for async operation to finish
+ */
 typedef const char* AsyncNatsAsyncString;
 
 struct AsyncNatsOptionalI32
@@ -129,6 +134,20 @@ void async_nats_subscribtion_receive_async(AsyncNatsSubscription* chan,
                                            AsyncNatsRecieveCallback cb);
 
 /// ---- JetStream ----
+
+/// ---- Utility----
+struct AsyncNatsNamedSender;
+AsyncNatsNamedSender* async_nats_named_sender_new(AsyncNatsBorrowedString topic,
+                                                  const AsyncNatsConnection* conn,
+                                                  unsigned long long capacity);
+AsyncNatsNamedSender* async_nats_named_sender_clone(const AsyncNatsNamedSender* conn);
+void async_nats_named_sender_delete(AsyncNatsNamedSender* conn);
+bool async_nats_named_sender_try_send(const AsyncNatsNamedSender* conn,
+                                      AsyncNatsBorrowedString topic,
+                                      AsyncNatsBorrowedMessage message);
+void async_nats_named_sender_send(const AsyncNatsNamedSender* conn,
+                                  AsyncNatsBorrowedString topic,
+                                  AsyncNatsBorrowedMessage message);
 
 EXTERN_C_END
 

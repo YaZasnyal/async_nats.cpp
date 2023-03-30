@@ -6,3 +6,4 @@
 #include "async_nats/message.hpp"
 #include "async_nats/tokio_runtime.hpp"
 #include "async_nats/subscribtion.hpp"
+#include "async_nats/named_sender.hpp"

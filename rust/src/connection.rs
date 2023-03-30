@@ -9,8 +9,8 @@ use std::ffi::c_void;
 
 #[derive(Clone)]
 pub struct Connection {
-    rt: tokio::runtime::Handle,
-    client: Client,
+    pub(crate) rt: tokio::runtime::Handle,
+    pub(crate) client: Client,
 }
 
 #[repr(C)]
@@ -30,7 +30,8 @@ pub extern "C" fn async_nats_connection_connect(
     let rt = unsafe { &*rt };
     let cfg = unsafe { &*cfg };
 
-    rt.handle().clone().spawn(async move {
+    let handle = rt.handle().clone();
+    rt.handle().spawn(async move {
         let cb = cb;
         let mut co = ConnectOptions::new();
         if let Some(name) = &cfg.name {
@@ -41,13 +42,16 @@ pub extern "C" fn async_nats_connection_connect(
         let conn = match conn {
             Ok(conn) => conn,
             Err(err) => {
-                cb.0(std::ptr::null_mut(), io_error_convert(err), cb.1);
+                // TODO: Error kind got changed. This should be fixed later;
+                // Printing to stderr for now
+                eprintln!("Connection error: {}", err.to_string());
+                cb.0(std::ptr::null_mut(), 0 as i32, cb.1);
                 return;
             }
         };
 
         let conn = Box::new(Connection {
-            rt: rt.handle().clone(),
+            rt: handle,
             client: conn,
         });
 
