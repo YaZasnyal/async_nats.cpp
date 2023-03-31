@@ -1,6 +1,11 @@
 # async_nats
 
-This is the async_nats project.
+**!WARNING!**
+
+This project is in "Proof of Concept" stage. 
+
+
+This project is a C++ binding to the [async_nats.rs](https://github.com/nats-io/nats.rs). The main goal is to create an easy to use library that uses the asynchronous model of Boost ASIO.
 
 # Building and installing
 
