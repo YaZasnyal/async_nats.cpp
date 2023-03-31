@@ -12,10 +12,6 @@ pub struct NamedSender {
 }
 
 impl NamedSender {
-    pub fn new(topic: String, conn: &Connection) -> Self {
-        Self::with_capacity(topic, conn, 1024)
-    }
-
     pub fn with_capacity(topic: String, conn: &Connection, capacity: usize) -> Self {
         let (tx, mut rx) = unbounded_channel();
 

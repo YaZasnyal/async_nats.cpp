@@ -22,8 +22,8 @@ impl Subscribtion {
 }
 
 pub struct SubscribtionWrapper {
-    rt: tokio::runtime::Handle,
-    inner: Subscribtion,
+    pub(crate) rt: tokio::runtime::Handle,
+    pub(crate) inner: Subscribtion,
 }
 
 impl SubscribtionWrapper {

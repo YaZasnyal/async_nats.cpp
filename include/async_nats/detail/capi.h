@@ -5,7 +5,9 @@
 
 #ifdef __cplusplus
 #  define EXTERN_C extern "C"
-#  define EXTERN_C_BEGIN extern "C" {
+#  define EXTERN_C_BEGIN \
+    extern "C" \
+    {
 #  define EXTERN_C_END }
 #else
 #  define EXTERN_C /* Nothing */
@@ -148,6 +150,13 @@ bool async_nats_named_sender_try_send(const AsyncNatsNamedSender* conn,
 void async_nats_named_sender_send(const AsyncNatsNamedSender* conn,
                                   AsyncNatsBorrowedString topic,
                                   AsyncNatsBorrowedMessage message);
+
+struct AsyncNatsNamedReceiver;
+AsyncNatsNamedReceiver* async_nats_named_receiver_new(AsyncNatsSubscription* sub,
+                                                      unsigned long long capacity);
+void async_nats_named_receiver_delete(AsyncNatsNamedReceiver* recv);
+AsyncNatsMessage* async_nats_named_receiver_try_recv(const AsyncNatsNamedReceiver* recv);
+AsyncNatsMessage* async_nats_named_receiver_recv(const AsyncNatsNamedReceiver* recv);
 
 EXTERN_C_END
 

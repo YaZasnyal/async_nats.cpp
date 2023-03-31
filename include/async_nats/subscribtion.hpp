@@ -49,6 +49,13 @@ public:
 
   AsyncNatsSubscription* get_raw() { return sub_; }
 
+  AsyncNatsSubscription* release_raw()
+  {
+    auto result = sub_;
+    sub_ = nullptr;
+    return result;
+  }
+
   template<class CompletionToken>
   auto receive(CompletionToken&& token)
   {

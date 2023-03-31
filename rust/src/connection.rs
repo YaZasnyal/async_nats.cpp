@@ -1,7 +1,6 @@
 use crate::tokio_runtime::TokioRuntime;
 
 use crate::api::{AsyncMessage, AsyncString, BorrowedString, LossyConvert, OwnedString};
-use crate::error::io_error_convert;
 use crate::subscribtion::SubscribtionWrapper;
 use async_nats::{connect_with_options, Client, ConnectOptions, ServerAddr};
 use core::slice;
