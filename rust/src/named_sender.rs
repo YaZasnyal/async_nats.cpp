@@ -1,6 +1,7 @@
 use crate::api::{BorrowedMessage, BorrowedString, LossyConvert};
 use crate::connection::Connection;
-use bytes::Bytes;
+use bytes::{Bytes, BytesMut};
+use std::cell::RefCell;
 use std::ffi::c_ulonglong;
 use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
@@ -102,7 +103,14 @@ pub extern "C" fn async_nats_named_sender_try_send(
 
     let data_slice =
         unsafe { std::slice::from_raw_parts(data.0 as *const u8, data.1.try_into().unwrap()) };
-    let bytes = bytes::Bytes::copy_from_slice(data_slice);
+
+    thread_local! {
+        static BYTES: RefCell<BytesMut> = RefCell::new(bytes::BytesMut::with_capacity(65535));
+    }
+    let bytes = BYTES.with(|f| {
+        f.borrow_mut().extend_from_slice(data_slice);
+        f.borrow_mut().split_to(data_slice.len()).freeze()
+    });
     let message = Message {
         topic: if !topic.is_null() {
             Some(topic.lossy_convert())
@@ -131,7 +139,14 @@ pub extern "C" fn async_nats_named_sender_send(
 
     let data_slice =
         unsafe { std::slice::from_raw_parts(data.0 as *const u8, data.1.try_into().unwrap()) };
-    let bytes = bytes::Bytes::copy_from_slice(data_slice);
+
+    thread_local! {
+        static BYTES: RefCell<BytesMut> = RefCell::new(bytes::BytesMut::with_capacity(65535));
+    }
+    let bytes = BYTES.with(|f| {
+        f.borrow_mut().extend_from_slice(data_slice);
+        f.borrow_mut().split_to(data_slice.len()).freeze()
+    });
     let message = Message {
         topic: if !topic.is_null() {
             Some(topic.lossy_convert())
