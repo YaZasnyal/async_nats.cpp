@@ -1,30 +1,33 @@
-use crate::tokio_runtime::TokioRuntime;
+use crate::tokio_runtime::AsyncNatsTokioRuntime;
 
-use crate::api::{AsyncMessage, AsyncString, BorrowedString, LossyConvert, OwnedString};
-use crate::subscribtion::SubscribtionWrapper;
+use crate::api::{
+    AsyncNatsAsyncMessage, AsyncNatsAsyncString, AsyncNatsBorrowedString, AsyncNatsOwnedString,
+    LossyConvert,
+};
+use crate::subscribtion::AsyncNatsSubscribtion;
 use async_nats::{connect_with_options, Client, ConnectOptions, ServerAddr};
 use core::slice;
 use std::ffi::c_void;
 
 #[derive(Clone)]
-pub struct Connection {
+pub struct AsyncNatsConnection {
     pub(crate) rt: tokio::runtime::Handle,
     pub(crate) client: Client,
 }
 
 #[repr(C)]
 #[derive(Debug, Clone)]
-pub struct ConnectCallback(
-    extern "C" fn(conn: *mut Connection, err: i32, closure: *mut c_void),
+pub struct AsyncNatsConnectCallback(
+    extern "C" fn(conn: *mut AsyncNatsConnection, err: i32, closure: *mut c_void),
     *mut c_void,
 );
-unsafe impl Send for ConnectCallback {}
+unsafe impl Send for AsyncNatsConnectCallback {}
 
 #[no_mangle]
 pub extern "C" fn async_nats_connection_connect(
-    rt: *const TokioRuntime,
-    cfg: *const ConnetionParams,
-    cb: ConnectCallback,
+    rt: *const AsyncNatsTokioRuntime,
+    cfg: *const AsyncNatsConnetionParams,
+    cb: AsyncNatsConnectCallback,
 ) {
     let rt = unsafe { &*rt };
     let cfg = unsafe { &*cfg };
@@ -49,7 +52,7 @@ pub extern "C" fn async_nats_connection_connect(
             }
         };
 
-        let conn = Box::new(Connection {
+        let conn = Box::new(AsyncNatsConnection {
             rt: handle,
             client: conn,
         });
@@ -59,14 +62,16 @@ pub extern "C" fn async_nats_connection_connect(
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_connection_clone(conn: *const Connection) -> *mut Connection {
+pub extern "C" fn async_nats_connection_clone(
+    conn: *const AsyncNatsConnection,
+) -> *mut AsyncNatsConnection {
     let conn = unsafe { &*conn };
     let new_conn = Box::new(conn.clone());
     Box::into_raw(new_conn)
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_connection_delete(conn: *mut Connection) {
+pub extern "C" fn async_nats_connection_delete(conn: *mut AsyncNatsConnection) {
     unsafe {
         drop(Box::from_raw(conn));
     }
@@ -74,18 +79,18 @@ pub extern "C" fn async_nats_connection_delete(conn: *mut Connection) {
 
 #[repr(C)]
 #[derive(Debug, Clone)]
-pub struct PublishCallback(extern "C" fn(d: *mut c_void), *mut c_void);
-unsafe impl Send for PublishCallback {}
+pub struct AsyncNatsPublishCallback(extern "C" fn(d: *mut c_void), *mut c_void);
+unsafe impl Send for AsyncNatsPublishCallback {}
 
 /// Publish data asynchronously.
 ///
 /// topic and message: must be valid until callback is called.
 #[no_mangle]
 pub extern "C" fn async_nats_connection_publish_async(
-    conn: *const Connection,
-    topic: AsyncString,
-    message: AsyncMessage,
-    cb: PublishCallback,
+    conn: *const AsyncNatsConnection,
+    topic: AsyncNatsAsyncString,
+    message: AsyncNatsAsyncMessage,
+    cb: AsyncNatsPublishCallback,
 ) {
     let conn = unsafe { &*conn };
     let topic_str = topic.lossy_convert();
@@ -107,17 +112,17 @@ pub extern "C" fn async_nats_connection_publish_async(
 
 #[repr(C)]
 #[derive(Debug, Clone)]
-pub struct SubscribeCallback(
-    extern "C" fn(sub: *mut SubscribtionWrapper, err: OwnedString, d: *mut c_void),
+pub struct AsyncNatsSubscribeCallback(
+    extern "C" fn(sub: *mut AsyncNatsSubscribtion, err: AsyncNatsOwnedString, d: *mut c_void),
     *mut c_void,
 );
-unsafe impl Send for SubscribeCallback {}
+unsafe impl Send for AsyncNatsSubscribeCallback {}
 
 #[no_mangle]
-extern "C" fn async_nats_connection_subscribe_async(
-    conn: *const Connection,
-    topic: AsyncString,
-    cb: SubscribeCallback,
+pub extern "C" fn async_nats_connection_subscribe_async(
+    conn: *const AsyncNatsConnection,
+    topic: AsyncNatsAsyncString,
+    cb: AsyncNatsSubscribeCallback,
 ) {
     let conn = unsafe { &*conn };
     let topic_str = topic.lossy_convert();
@@ -129,7 +134,7 @@ extern "C" fn async_nats_connection_subscribe_async(
 
         match sub {
             Ok(sub) => {
-                let sub = Box::new(SubscribtionWrapper::new(rt, sub));
+                let sub = Box::new(AsyncNatsSubscribtion::new(rt, sub));
                 cb.0(Box::into_raw(sub), std::ptr::null_mut(), cb.1);
             }
             Err(e) => {
@@ -145,19 +150,19 @@ extern "C" fn async_nats_connection_subscribe_async(
 // ---- Config ----
 
 #[derive(Default)]
-pub struct ConnetionParams {
+pub struct AsyncNatsConnetionParams {
     addrs: Vec<ServerAddr>,
     name: Option<String>,
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_connection_config_new() -> *mut ConnetionParams {
-    let cfg = Box::new(ConnetionParams::default());
+pub extern "C" fn async_nats_connection_config_new() -> *mut AsyncNatsConnetionParams {
+    let cfg = Box::new(AsyncNatsConnetionParams::default());
     Box::into_raw(cfg)
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_connection_config_delete(cfg: *mut ConnetionParams) {
+pub extern "C" fn async_nats_connection_config_delete(cfg: *mut AsyncNatsConnetionParams) {
     unsafe {
         drop(Box::from_raw(cfg));
     }
@@ -165,8 +170,8 @@ pub extern "C" fn async_nats_connection_config_delete(cfg: *mut ConnetionParams)
 
 #[no_mangle]
 pub extern "C" fn async_nats_connection_config_name(
-    cfg: *mut ConnetionParams,
-    name: BorrowedString,
+    cfg: *mut AsyncNatsConnetionParams,
+    name: AsyncNatsBorrowedString,
 ) {
     let cfg = unsafe { &mut *cfg };
     cfg.name = Some(name.lossy_convert());
@@ -174,8 +179,8 @@ pub extern "C" fn async_nats_connection_config_name(
 
 #[no_mangle]
 pub extern "C" fn async_nats_connection_config_addr(
-    cfg: *mut ConnetionParams,
-    addr: BorrowedString,
+    cfg: *mut AsyncNatsConnetionParams,
+    addr: AsyncNatsBorrowedString,
 ) {
     let cfg = unsafe { &mut *cfg };
     // TODO: Add proper error handling

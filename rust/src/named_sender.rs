@@ -1,5 +1,5 @@
-use crate::api::{BorrowedMessage, BorrowedString, LossyConvert};
-use crate::connection::Connection;
+use crate::api::{AsyncNatsBorrowedMessage, AsyncNatsBorrowedString, LossyConvert};
+use crate::connection::AsyncNatsConnection;
 use bytes::{Bytes, BytesMut};
 use std::cell::RefCell;
 use std::ffi::c_ulonglong;
@@ -8,12 +8,12 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
 #[derive(Clone)]
-pub struct NamedSender {
+pub struct AsyncNatsNamedSender {
     inner: Arc<NamedSenderInner>,
 }
 
-impl NamedSender {
-    pub fn with_capacity(topic: String, conn: &Connection, capacity: usize) -> Self {
+impl AsyncNatsNamedSender {
+    pub fn with_capacity(topic: String, conn: &AsyncNatsConnection, capacity: usize) -> Self {
         let (tx, mut rx) = unbounded_channel();
 
         let inner = Arc::new(NamedSenderInner {
@@ -48,7 +48,7 @@ impl NamedSender {
 
 struct NamedSenderInner {
     topic: String,
-    conn: Connection,
+    conn: AsyncNatsConnection,
     sender: UnboundedSender<Message>,
     sem: Arc<Semaphore>,
 }
@@ -61,12 +61,12 @@ struct Message {
 
 #[no_mangle]
 pub extern "C" fn async_nats_named_sender_new(
-    topic: BorrowedString,
-    conn: *const Connection,
+    topic: AsyncNatsBorrowedString,
+    conn: *const AsyncNatsConnection,
     capacity: c_ulonglong,
-) -> *mut NamedSender {
+) -> *mut AsyncNatsNamedSender {
     let conn = unsafe { &*conn };
-    let sender = Box::new(NamedSender::with_capacity(
+    let sender = Box::new(AsyncNatsNamedSender::with_capacity(
         topic.lossy_convert(),
         conn,
         capacity as usize,
@@ -75,14 +75,16 @@ pub extern "C" fn async_nats_named_sender_new(
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_named_sender_clone(sender: *const NamedSender) -> *mut NamedSender {
+pub extern "C" fn async_nats_named_sender_clone(
+    sender: *const AsyncNatsNamedSender,
+) -> *mut AsyncNatsNamedSender {
     let sender = unsafe { &*sender };
     let new_sender = Box::new(sender.clone());
     Box::into_raw(new_sender)
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_named_sender_delete(sender: *mut NamedSender) {
+pub extern "C" fn async_nats_named_sender_delete(sender: *mut AsyncNatsNamedSender) {
     unsafe {
         drop(Box::from_raw(sender));
     }
@@ -90,9 +92,9 @@ pub extern "C" fn async_nats_named_sender_delete(sender: *mut NamedSender) {
 
 #[no_mangle]
 pub extern "C" fn async_nats_named_sender_try_send(
-    sender: *const NamedSender,
-    topic: BorrowedString,
-    data: BorrowedMessage,
+    sender: *const AsyncNatsNamedSender,
+    topic: AsyncNatsBorrowedString,
+    data: AsyncNatsBorrowedMessage,
 ) -> bool {
     let sender = unsafe { &*sender };
 
@@ -108,8 +110,9 @@ pub extern "C" fn async_nats_named_sender_try_send(
         static BYTES: RefCell<BytesMut> = RefCell::new(bytes::BytesMut::with_capacity(65535));
     }
     let bytes = BYTES.with(|f| {
-        f.borrow_mut().extend_from_slice(data_slice);
-        f.borrow_mut().split_to(data_slice.len()).freeze()
+        let mut mbytes = f.borrow_mut();
+        mbytes.extend_from_slice(data_slice);
+        mbytes.split_to(data_slice.len()).freeze()
     });
     let message = Message {
         topic: if !topic.is_null() {
@@ -126,9 +129,9 @@ pub extern "C" fn async_nats_named_sender_try_send(
 
 #[no_mangle]
 pub extern "C" fn async_nats_named_sender_send(
-    sender: *const NamedSender,
-    topic: BorrowedString,
-    data: BorrowedMessage,
+    sender: *const AsyncNatsNamedSender,
+    topic: AsyncNatsBorrowedString,
+    data: AsyncNatsBorrowedMessage,
 ) {
     let sender = unsafe { &*sender };
     let permit = sender.inner.sem.clone().try_acquire_owned();
@@ -144,8 +147,9 @@ pub extern "C" fn async_nats_named_sender_send(
         static BYTES: RefCell<BytesMut> = RefCell::new(bytes::BytesMut::with_capacity(65535));
     }
     let bytes = BYTES.with(|f| {
-        f.borrow_mut().extend_from_slice(data_slice);
-        f.borrow_mut().split_to(data_slice.len()).freeze()
+        let mut mbytes = f.borrow_mut();
+        mbytes.extend_from_slice(data_slice);
+        mbytes.split_to(data_slice.len()).freeze()
     });
     let message = Message {
         topic: if !topic.is_null() {

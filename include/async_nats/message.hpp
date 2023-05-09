@@ -7,7 +7,6 @@
 
 namespace async_nats
 {
-
 class Message
 {
 public:
@@ -45,7 +44,10 @@ public:
     return *this;
   }
 
-  operator bool() const { return message_ != nullptr; }
+  operator bool() const
+  {
+    return message_ != nullptr;
+  }
 
   std::string_view Topic() const
   {

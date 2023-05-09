@@ -1,9 +1,9 @@
-use crate::api::{Optional, OwnedString};
+use crate::api::{AsyncNatsOwnedString, Optional};
 
-pub type IoErrorCode = i32;
+pub type AsyncNatsIoError = i32;
 pub type OsError = i32;
 
-pub fn io_error_convert(e: std::io::Error) -> IoErrorCode {
+pub fn io_error_convert(e: std::io::Error) -> AsyncNatsIoError {
     e.kind() as i32
 }
 
@@ -58,7 +58,7 @@ pub fn int_to_error(e: i32) -> std::io::ErrorKind {
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_io_error_system_code(e: IoErrorCode) -> Optional<OsError> {
+pub extern "C" fn async_nats_io_error_system_code(e: AsyncNatsIoError) -> Optional<OsError> {
     let kind = int_to_error(e);
     let Some(e) = std::io::Error::from(kind).raw_os_error() else {
         return Optional::none();
@@ -67,7 +67,7 @@ pub extern "C" fn async_nats_io_error_system_code(e: IoErrorCode) -> Optional<Os
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_io_error_description(e: IoErrorCode) -> OwnedString {
+pub extern "C" fn async_nats_io_error_description(e: AsyncNatsIoError) -> AsyncNatsOwnedString {
     let kind = int_to_error(e);
     let e = std::io::Error::from(kind);
     let err = std::ffi::CString::new(e.to_string().as_bytes())

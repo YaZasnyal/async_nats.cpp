@@ -7,13 +7,12 @@
 
 namespace async_nats
 {
-
 class Subscribtion
 {
 public:
   Subscribtion() = default;
 
-  Subscribtion(AsyncNatsSubscription* sub)
+  Subscribtion(AsyncNatsSubscribtion* sub)
       : sub_(sub)
   {
   }
@@ -45,11 +44,17 @@ public:
     return *this;
   }
 
-  operator bool() const { return sub_ != nullptr; }
+  operator bool() const
+  {
+    return sub_ != nullptr;
+  }
 
-  AsyncNatsSubscription* get_raw() { return sub_; }
+  AsyncNatsSubscribtion* get_raw()
+  {
+    return sub_;
+  }
 
-  AsyncNatsSubscription* release_raw()
+  AsyncNatsSubscribtion* release_raw()
   {
     auto result = sub_;
     sub_ = nullptr;
@@ -71,7 +76,7 @@ public:
       };
 
       auto ctx = new CH(std::move(token));
-      ::AsyncNatsRecieveCallback cb {f, ctx};
+      ::AsyncNatsReceiveCallback cb {f, ctx};
       async_nats_subscribtion_receive_async(get_raw(), cb);
     };
 
@@ -79,7 +84,7 @@ public:
   }
 
 private:
-  AsyncNatsSubscription* sub_ = nullptr;
+  AsyncNatsSubscribtion* sub_ = nullptr;
 };
 
 }  // namespace async_nats

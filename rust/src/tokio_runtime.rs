@@ -1,11 +1,11 @@
-use crate::api::{BorrowedString, LossyConvert};
+use crate::api::{AsyncNatsBorrowedString, LossyConvert};
 
-pub struct TokioRuntime {
+pub struct AsyncNatsTokioRuntime {
     pub(crate) runtime: tokio::runtime::Runtime,
 }
 
-impl TokioRuntime {
-    pub fn new(cfg: &TokioRuntimeConfig) -> Self {
+impl AsyncNatsTokioRuntime {
+    pub fn new(cfg: &AsyncNatsTokioRuntimeConfig) -> Self {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .worker_threads(cfg.thread_count)
@@ -23,26 +23,26 @@ impl TokioRuntime {
 
 #[no_mangle]
 pub extern "C" fn async_nats_tokio_runtime_new(
-    cfg: *const TokioRuntimeConfig,
-) -> *mut TokioRuntime {
+    cfg: *const AsyncNatsTokioRuntimeConfig,
+) -> *mut AsyncNatsTokioRuntime {
     let cfg = unsafe { &*cfg };
-    let tr = Box::new(TokioRuntime::new(cfg));
+    let tr = Box::new(AsyncNatsTokioRuntime::new(cfg));
     Box::into_raw(tr)
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_tokio_runtime_delete(runtime: *mut TokioRuntime) {
+pub extern "C" fn async_nats_tokio_runtime_delete(runtime: *mut AsyncNatsTokioRuntime) {
     unsafe {
         drop(Box::from_raw(runtime));
     }
 }
 
-pub struct TokioRuntimeConfig {
+pub struct AsyncNatsTokioRuntimeConfig {
     thread_name: String,
     thread_count: usize,
 }
 
-impl Default for TokioRuntimeConfig {
+impl Default for AsyncNatsTokioRuntimeConfig {
     fn default() -> Self {
         Self {
             thread_name: "tokio_runtime".into(),
@@ -57,13 +57,13 @@ impl Default for TokioRuntimeConfig {
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_tokio_runtime_config_new() -> *mut TokioRuntimeConfig {
-    let cfg = Box::new(TokioRuntimeConfig::default());
+pub extern "C" fn async_nats_tokio_runtime_config_new() -> *mut AsyncNatsTokioRuntimeConfig {
+    let cfg = Box::new(AsyncNatsTokioRuntimeConfig::default());
     Box::into_raw(cfg)
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_tokio_runtime_config_delete(cfg: *mut TokioRuntimeConfig) {
+pub extern "C" fn async_nats_tokio_runtime_config_delete(cfg: *mut AsyncNatsTokioRuntimeConfig) {
     unsafe {
         drop(Box::from_raw(cfg));
     }
@@ -71,8 +71,8 @@ pub extern "C" fn async_nats_tokio_runtime_config_delete(cfg: *mut TokioRuntimeC
 
 #[no_mangle]
 pub extern "C" fn async_nats_tokio_runtime_config_thread_name(
-    cfg: *mut TokioRuntimeConfig,
-    thread_name: BorrowedString,
+    cfg: *mut AsyncNatsTokioRuntimeConfig,
+    thread_name: AsyncNatsBorrowedString,
 ) {
     let cfg = unsafe { &mut *cfg };
     cfg.thread_name = thread_name.lossy_convert();
@@ -80,7 +80,7 @@ pub extern "C" fn async_nats_tokio_runtime_config_thread_name(
 
 #[no_mangle]
 pub extern "C" fn async_nats_tokio_runtime_config_thread_count(
-    cfg: *mut TokioRuntimeConfig,
+    cfg: *mut AsyncNatsTokioRuntimeConfig,
     thread_count: u32,
 ) {
     let cfg = unsafe { &mut *cfg };

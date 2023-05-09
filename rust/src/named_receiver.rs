@@ -1,15 +1,15 @@
 use std::ffi::c_ulonglong;
 
-use crate::subscribtion::SubscribtionWrapper;
-use async_nats::Message;
+use crate::message::AsyncNatsMessage;
+use crate::subscribtion::AsyncNatsSubscribtion;
 use crossbeam::channel::{bounded, Receiver};
 
-pub struct NamedReceiver {
-    receiver: Receiver<Message>,
+pub struct AsyncNatsNamedReceiver {
+    receiver: Receiver<AsyncNatsMessage>,
 }
 
-impl NamedReceiver {
-    pub fn new(w: SubscribtionWrapper, capacity: usize) -> Self {
+impl AsyncNatsNamedReceiver {
+    pub fn new(w: AsyncNatsSubscribtion, capacity: usize) -> Self {
         let rt = w.rt.clone();
         let (tx, rx) = bounded(capacity);
         rt.spawn(async move {
@@ -28,23 +28,25 @@ impl NamedReceiver {
 
 #[no_mangle]
 pub extern "C" fn async_nats_named_receiver_new(
-    s: *mut SubscribtionWrapper,
+    s: *mut AsyncNatsSubscribtion,
     capacity: c_ulonglong,
-) -> *mut NamedReceiver {
+) -> *mut AsyncNatsNamedReceiver {
     let sub = unsafe { Box::from_raw(s) };
-    let recv = Box::new(NamedReceiver::new(*sub, capacity as usize));
+    let recv = Box::new(AsyncNatsNamedReceiver::new(*sub, capacity as usize));
     Box::into_raw(recv)
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_named_receiver_delete(recv: *mut NamedReceiver) {
+pub extern "C" fn async_nats_named_receiver_delete(recv: *mut AsyncNatsNamedReceiver) {
     unsafe {
         drop(Box::from_raw(recv));
     }
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_named_receiver_try_recv(s: *const NamedReceiver) -> *mut Message {
+pub extern "C" fn async_nats_named_receiver_try_recv(
+    s: *const AsyncNatsNamedReceiver,
+) -> *mut AsyncNatsMessage {
     let receiver = unsafe { &*s };
     let Ok(msg) = receiver.receiver.try_recv() else {
         return std::ptr::null_mut();
@@ -53,7 +55,9 @@ pub extern "C" fn async_nats_named_receiver_try_recv(s: *const NamedReceiver) ->
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_named_receiver_recv(s: *const NamedReceiver) -> *mut Message {
+pub extern "C" fn async_nats_named_receiver_recv(
+    s: *const AsyncNatsNamedReceiver,
+) -> *mut AsyncNatsMessage {
     let receiver = unsafe { &*s };
     let Ok(msg) = receiver.receiver.recv() else {
         return std::ptr::null_mut();

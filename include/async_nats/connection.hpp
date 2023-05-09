@@ -13,12 +13,14 @@
 
 namespace async_nats
 {
-
 class ConnectionErrorCategory : public boost::system::error_category
 {
   // error_category interface
 public:
-  const char* name() const noexcept override { return "async_asio_connection_error"; }
+  const char* name() const noexcept override
+  {
+    return "async_asio_connection_error";
+  }
 
   std::string message(int ev) const override
   {
@@ -57,12 +59,18 @@ inline boost::system::error_condition make_error_condition(int e)
 class ConnectionOptions
 {
 public:
-  ConnectionOptions() { options_ = async_nats_connection_config_new(); }
+  ConnectionOptions()
+  {
+    options_ = async_nats_connection_config_new();
+  }
 
   ConnectionOptions(const ConnectionOptions&) = delete;
   ConnectionOptions(ConnectionOptions&&) = default;
 
-  ~ConnectionOptions() { async_nats_connection_config_delete(options_); }
+  ~ConnectionOptions()
+  {
+    async_nats_connection_config_delete(options_);
+  }
 
   ConnectionOptions& name(const std::string& name)
   {
@@ -76,12 +84,18 @@ public:
     return *this;
   }
 
-  AsyncNatsConnectionConfig* get_raw() { return options_; }
+  AsyncNatsConnetionParams* get_raw()
+  {
+    return options_;
+  }
 
-  const AsyncNatsConnectionConfig* get_raw() const { return options_; }
+  const AsyncNatsConnetionParams* get_raw() const
+  {
+    return options_;
+  }
 
 private:
-  AsyncNatsConnectionConfig* options_;
+  AsyncNatsConnetionParams* options_;
 };
 
 class Connection
@@ -94,7 +108,10 @@ public:
   {
   }
 
-  Connection(const Connection& o) { conn_ = async_nats_connection_clone(o.get_raw()); }
+  Connection(const Connection& o)
+  {
+    conn_ = async_nats_connection_clone(o.get_raw());
+  }
 
   Connection(Connection&& o)
   {
@@ -136,11 +153,20 @@ public:
     return *this;
   }
 
-  operator bool() const { return conn_ != nullptr; }
+  operator bool() const
+  {
+    return conn_ != nullptr;
+  }
 
-  AsyncNatsConnection* get_raw() { return conn_; }
+  AsyncNatsConnection* get_raw()
+  {
+    return conn_;
+  }
 
-  const AsyncNatsConnection* get_raw() const { return conn_; }
+  const AsyncNatsConnection* get_raw() const
+  {
+    return conn_;
+  }
 
   /**
    * @brief publish
@@ -167,7 +193,7 @@ public:
       async_nats_connection_publish_async(
           get_raw(),
           topic.data(),
-          {reinterpret_cast<const uint8_t*>(data.data()), data.size()},
+          {reinterpret_cast<const char*>(data.data()), data.size()},
           cb);
     };
 
@@ -181,7 +207,7 @@ public:
     {
       using CH = std::decay_t<decltype(token)>;
 
-      static auto f = [](AsyncNatsSubscription* sub, AsyncNatsOwnedString /*err*/, void* ctx)
+      static auto f = [](AsyncNatsSubscribtion* sub, AsyncNatsOwnedString /*err*/, void* ctx)
       {
         auto c = static_cast<CH*>(ctx);
         (*c)(Subscribtion(sub));

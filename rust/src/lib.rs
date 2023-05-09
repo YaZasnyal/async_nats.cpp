@@ -5,6 +5,5 @@ mod error;
 mod message;
 mod named_receiver;
 mod named_sender;
-mod runtime;
 mod subscribtion;
 mod tokio_runtime;

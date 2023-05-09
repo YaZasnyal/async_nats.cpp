@@ -23,7 +23,10 @@ public:
     sender = async_nats_named_sender_new(topic.c_str(), conn.get_raw(), capacity);
   }
 
-  NamedSender(const NamedSender& o) { sender = async_nats_named_sender_clone(o.get_raw()); }
+  NamedSender(const NamedSender& o)
+  {
+    sender = async_nats_named_sender_clone(o.get_raw());
+  }
 
   NamedSender(NamedSender&& o)
   {
@@ -63,9 +66,15 @@ public:
     return *this;
   }
 
-  AsyncNatsNamedSender* get_raw() { return sender; }
+  AsyncNatsNamedSender* get_raw()
+  {
+    return sender;
+  }
 
-  const AsyncNatsNamedSender* get_raw() const { return sender; }
+  const AsyncNatsNamedSender* get_raw() const
+  {
+    return sender;
+  }
 
   /**
    * @brief try_send - pushes data to the send queue if there is space available
@@ -74,13 +83,13 @@ public:
   bool try_send(boost::asio::const_buffer data) const
   {
     return async_nats_named_sender_try_send(
-        sender, nullptr, {reinterpret_cast<const uint8_t*>(data.data()), data.size()});
+        sender, nullptr, {reinterpret_cast<const char*>(data.data()), data.size()});
   }
 
   bool try_send(const char* topic, boost::asio::const_buffer data) const
   {
     return async_nats_named_sender_try_send(
-        sender, topic, {reinterpret_cast<const uint8_t*>(data.data()), data.size()});
+        sender, topic, {reinterpret_cast<const char*>(data.data()), data.size()});
   }
 
   /**
@@ -92,13 +101,13 @@ public:
   void send(boost::asio::const_buffer data) const
   {
     async_nats_named_sender_send(
-        sender, nullptr, {reinterpret_cast<const uint8_t*>(data.data()), data.size()});
+        sender, nullptr, {reinterpret_cast<const char*>(data.data()), data.size()});
   }
 
   void send(const char* topic, boost::asio::const_buffer data) const
   {
     async_nats_named_sender_send(
-        sender, topic, {reinterpret_cast<const uint8_t*>(data.data()), data.size()});
+        sender, topic, {reinterpret_cast<const char*>(data.data()), data.size()});
   }
 
 private:

@@ -6,13 +6,18 @@
 
 namespace async_nats
 {
-
 class TokioRuntimeConfig
 {
 public:
-  TokioRuntimeConfig() { cfg_ = async_nats_tokio_runtime_config_new(); }
+  TokioRuntimeConfig()
+  {
+    cfg_ = async_nats_tokio_runtime_config_new();
+  }
 
-  ~TokioRuntimeConfig() { async_nats_tokio_runtime_config_delete(cfg_); }
+  ~TokioRuntimeConfig()
+  {
+    async_nats_tokio_runtime_config_delete(cfg_);
+  }
 
   TokioRuntimeConfig& thread_name(const std::string& tname)
   {
@@ -26,12 +31,18 @@ public:
     return *this;
   }
 
-  AsyncNatsTokioRuntimeCfg* get_raw() { return cfg_; }
+  AsyncNatsTokioRuntimeConfig* get_raw()
+  {
+    return cfg_;
+  }
 
-  const AsyncNatsTokioRuntimeCfg* get_raw() const { return cfg_; }
+  const AsyncNatsTokioRuntimeConfig* get_raw() const
+  {
+    return cfg_;
+  }
 
 private:
-  AsyncNatsTokioRuntimeCfg* cfg_;
+  AsyncNatsTokioRuntimeConfig* cfg_;
 };
 
 class TokioRuntime
@@ -72,9 +83,15 @@ public:
     return *this;
   }
 
-  operator bool() const { return rt_ != nullptr; }
+  operator bool() const
+  {
+    return rt_ != nullptr;
+  }
 
-  const AsyncNatsTokioRuntime* get_raw() const { return rt_; }
+  const AsyncNatsTokioRuntime* get_raw() const
+  {
+    return rt_;
+  }
 
 private:
   AsyncNatsTokioRuntime* rt_;

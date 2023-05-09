@@ -6,7 +6,6 @@
 
 namespace async_nats
 {
-
 class NamedReceiver
 {
 public:
@@ -33,7 +32,7 @@ public:
 
   NamedReceiver& operator=(NamedReceiver&& o)
   {
-    if(this == &o)
+    if (this == &o)
       return *this;
 
     if (receiver_)
@@ -48,7 +47,10 @@ public:
    * @brief recv blocks current thread untill a message is available
    * @return A new message
    */
-  Message recv() const { return Message(async_nats_named_receiver_recv(receiver_)); }
+  Message recv() const
+  {
+    return Message(async_nats_named_receiver_recv(receiver_));
+  }
 
   /**
    * @brief try_recv checks if message is available
@@ -56,7 +58,10 @@ public:
    * This function never blocks.
    * @return A new message if avalable
    */
-  Message try_recv() const { return Message(async_nats_named_receiver_try_recv(receiver_)); }
+  Message try_recv() const
+  {
+    return Message(async_nats_named_receiver_try_recv(receiver_));
+  }
 
 private:
   AsyncNatsNamedReceiver* receiver_;
