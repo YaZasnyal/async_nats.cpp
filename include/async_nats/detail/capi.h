@@ -12,9 +12,45 @@
 #include <stdlib.h>
 
 
+typedef enum AsyncNatsConnectErrorKind
+{
+  /**
+   * Parsing the passed server address failed.
+   */
+  ServerParse,
+  /**
+   * DNS related issues.
+   */
+  Dns,
+  /**
+   * Failed authentication process, signing nonce, etc.
+   */
+  Authentication,
+  /**
+   * Server returned authorization violation error.
+   */
+  AuthorizationViolation,
+  /**
+   * Connect timed out.
+   */
+  TimedOut,
+  /**
+   * Erroneous TLS setup.
+   */
+  Tls,
+  /**
+   * Other IO error.
+   */
+  Io,
+} AsyncNatsConnectErrorKind;
+
+typedef struct AsyncNatsConnectError AsyncNatsConnectError;
+
 typedef struct AsyncNatsConnection AsyncNatsConnection;
 
 typedef struct AsyncNatsConnetionParams AsyncNatsConnetionParams;
+
+typedef struct AsyncNatsMessage AsyncNatsMessage;
 
 typedef struct AsyncNatsNamedReceiver AsyncNatsNamedReceiver;
 
@@ -28,18 +64,19 @@ typedef struct AsyncNatsTokioRuntime AsyncNatsTokioRuntime;
 
 typedef struct AsyncNatsTokioRuntimeConfig AsyncNatsTokioRuntimeConfig;
 
-typedef struct Message Message;
-
 /**
  * BorrowedString is a C-string with lifetime limited to a specific function call
+ * or while object that produced this string is valid
  */
 typedef const char *AsyncNatsBorrowedString;
 
 typedef struct AsyncNatsConnectCallback
 {
-  void (*_0)(struct AsyncNatsConnection *conn, int32_t err, void *closure);
+  void (*_0)(struct AsyncNatsConnection *conn, struct AsyncNatsConnectError *err, void *closure);
   void *_1;
 } AsyncNatsConnectCallback;
+
+typedef char *AsyncNatsOwnedString;
 
 typedef AsyncNatsBorrowedString AsyncNatsAsyncString;
 
@@ -65,23 +102,11 @@ typedef struct AsyncNatsPublishCallback
   void *_1;
 } AsyncNatsPublishCallback;
 
-typedef char *AsyncNatsOwnedString;
-
 typedef struct AsyncNatsSubscribeCallback
 {
   void (*_0)(struct AsyncNatsSubscribtion *sub, AsyncNatsOwnedString err, void *d);
   void *_1;
 } AsyncNatsSubscribeCallback;
-
-typedef int32_t AsyncNatsIoError;
-
-typedef int32_t OsError;
-
-typedef struct Optional_OsError
-{
-  bool has_value;
-  OsError value;
-} Optional_OsError;
 
 typedef struct AsyncNatsSlice
 {
@@ -89,11 +114,9 @@ typedef struct AsyncNatsSlice
   uint64_t size;
 } AsyncNatsSlice;
 
-typedef struct Message AsyncNatsMessage;
-
 typedef struct AsyncNatsReceiveCallback
 {
-  void (*_0)(struct Message *m, void *c);
+  void (*_0)(struct AsyncNatsMessage *m, void *c);
   void *_1;
 } AsyncNatsReceiveCallback;
 
@@ -119,6 +142,12 @@ void async_nats_connection_connect(const struct AsyncNatsTokioRuntime *rt,
 
 void async_nats_connection_delete(struct AsyncNatsConnection *conn);
 
+void async_nats_connection_error_delete(struct AsyncNatsConnectError *err);
+
+AsyncNatsOwnedString async_nats_connection_error_describtion(const struct AsyncNatsConnectError *err);
+
+enum AsyncNatsConnectErrorKind async_nats_connection_error_kind(const struct AsyncNatsConnectError *err);
+
 /**
  * Publish data asynchronously.
  *
@@ -133,38 +162,34 @@ void async_nats_connection_subscribe_async(const struct AsyncNatsConnection *con
                                            AsyncNatsAsyncString topic,
                                            struct AsyncNatsSubscribeCallback cb);
 
-AsyncNatsOwnedString async_nats_io_error_description(AsyncNatsIoError e);
-
-struct Optional_OsError async_nats_io_error_system_code(AsyncNatsIoError e);
-
 /**
  * Returs Slice with payload details
  * Slice is valid while NatsMessage is valid
  */
-struct AsyncNatsSlice async_nats_message_data(const AsyncNatsMessage *msg);
+struct AsyncNatsSlice async_nats_message_data(const struct AsyncNatsMessage *msg);
 
 /**
  * Deletes NatsMessage.
  * Using this object after free causes undefined bahavior
  */
-void async_nats_message_delete(AsyncNatsMessage *msg);
+void async_nats_message_delete(struct AsyncNatsMessage *msg);
 
-struct AsyncNatsSlice async_nats_message_reply_to(const AsyncNatsMessage *msg);
+struct AsyncNatsSlice async_nats_message_reply_to(const struct AsyncNatsMessage *msg);
 
 /**
  * Returns C-string with topic that was used to publish this message
  * Topic is valid while NatsMessage is valid
  */
-struct AsyncNatsSlice async_nats_message_topic(const AsyncNatsMessage *msg);
+struct AsyncNatsSlice async_nats_message_topic(const struct AsyncNatsMessage *msg);
 
 void async_nats_named_receiver_delete(struct AsyncNatsNamedReceiver *recv);
 
 struct AsyncNatsNamedReceiver *async_nats_named_receiver_new(struct AsyncNatsSubscribtion *s,
                                                              unsigned long long capacity);
 
-AsyncNatsMessage *async_nats_named_receiver_recv(const struct AsyncNatsNamedReceiver *s);
+struct AsyncNatsMessage *async_nats_named_receiver_recv(const struct AsyncNatsNamedReceiver *s);
 
-AsyncNatsMessage *async_nats_named_receiver_try_recv(const struct AsyncNatsNamedReceiver *s);
+struct AsyncNatsMessage *async_nats_named_receiver_try_recv(const struct AsyncNatsNamedReceiver *s);
 
 struct AsyncNatsNamedSender *async_nats_named_sender_clone(const struct AsyncNatsNamedSender *sender);
 

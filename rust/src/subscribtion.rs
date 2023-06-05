@@ -1,3 +1,4 @@
+use crate::message::AsyncNatsMessage;
 use async_nats::{Message, Subscriber};
 use futures::{FutureExt, StreamExt};
 use std::ffi::c_void;
@@ -43,7 +44,10 @@ pub extern "C" fn async_nats_subscribtion_delete(s: *mut AsyncNatsSubscribtion) 
 }
 
 #[repr(C)]
-pub struct AsyncNatsReceiveCallback(extern "C" fn(m: *mut Message, c: *mut c_void), *mut c_void);
+pub struct AsyncNatsReceiveCallback(
+    extern "C" fn(m: *mut AsyncNatsMessage, c: *mut c_void),
+    *mut c_void,
+);
 unsafe impl Send for AsyncNatsReceiveCallback {}
 
 #[no_mangle]
@@ -60,7 +64,7 @@ pub extern "C" fn async_nats_subscribtion_receive_async(
             return;
         };
 
-        let boxed_msg = Box::new(msg);
+        let boxed_msg = Box::new(AsyncNatsMessage(msg));
         cb.0(Box::into_raw(boxed_msg), cb.1);
     });
 }

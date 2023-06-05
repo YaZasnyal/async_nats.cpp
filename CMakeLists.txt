@@ -15,6 +15,15 @@ include(cmake/variables.cmake)
 
 # ---- Declare library ----
 
+include(FetchContent)
+FetchContent_Declare(
+    Corrosion
+    GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+    GIT_TAG v0.3.5
+)
+FetchContent_MakeAvailable(Corrosion)
+corrosion_import_crate(MANIFEST_PATH ${CMAKE_CURRENT_LIST_DIR}/Cargo.toml)
+
 add_library(async_nats_async_nats INTERFACE)
 
 file(GLOB_RECURSE SOURCES include/*.h include/*.hpp)
@@ -57,15 +66,6 @@ target_compile_features(async_nats_async_nats INTERFACE cxx_std_17)
 
 find_package(fmt REQUIRED)
 find_package(Boost REQUIRED)
-
-include(FetchContent)
-FetchContent_Declare(
-    Corrosion
-    GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
-    GIT_TAG v0.3.5
-)
-FetchContent_MakeAvailable(Corrosion)
-corrosion_import_crate(MANIFEST_PATH ${CMAKE_CURRENT_LIST_DIR}/rust/Cargo.toml)
 
 target_link_libraries(async_nats_async_nats
   INTERFACE

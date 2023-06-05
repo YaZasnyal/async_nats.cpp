@@ -5,7 +5,7 @@ use crate::subscribtion::AsyncNatsSubscribtion;
 use crossbeam::channel::{bounded, Receiver};
 
 pub struct AsyncNatsNamedReceiver {
-    receiver: Receiver<AsyncNatsMessage>,
+    receiver: Receiver<async_nats::Message>,
 }
 
 impl AsyncNatsNamedReceiver {
@@ -51,7 +51,7 @@ pub extern "C" fn async_nats_named_receiver_try_recv(
     let Ok(msg) = receiver.receiver.try_recv() else {
         return std::ptr::null_mut();
     };
-    Box::into_raw(Box::new(msg))
+    Box::into_raw(Box::new(msg.into()))
 }
 
 #[no_mangle]
@@ -62,5 +62,5 @@ pub extern "C" fn async_nats_named_receiver_recv(
     let Ok(msg) = receiver.receiver.recv() else {
         return std::ptr::null_mut();
     };
-    Box::into_raw(Box::new(msg))
+    Box::into_raw(Box::new(msg.into()))
 }

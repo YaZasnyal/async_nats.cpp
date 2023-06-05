@@ -1,3 +1,4 @@
+use crate::error::AsyncNatsConnectError;
 use crate::tokio_runtime::AsyncNatsTokioRuntime;
 
 use crate::api::{
@@ -18,7 +19,11 @@ pub struct AsyncNatsConnection {
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct AsyncNatsConnectCallback(
-    extern "C" fn(conn: *mut AsyncNatsConnection, err: i32, closure: *mut c_void),
+    extern "C" fn(
+        conn: *mut AsyncNatsConnection,
+        err: *mut crate::error::AsyncNatsConnectError,
+        closure: *mut c_void,
+    ),
     *mut c_void,
 );
 unsafe impl Send for AsyncNatsConnectCallback {}
@@ -44,10 +49,8 @@ pub extern "C" fn async_nats_connection_connect(
         let conn = match conn {
             Ok(conn) => conn,
             Err(err) => {
-                // TODO: Error kind got changed. This should be fixed later;
-                // Printing to stderr for now
-                eprintln!("Connection error: {}", err.to_string());
-                cb.0(std::ptr::null_mut(), 0 as i32, cb.1);
+                let err = Box::new(AsyncNatsConnectError(err));
+                cb.0(std::ptr::null_mut(), Box::leak(err), cb.1);
                 return;
             }
         };
@@ -57,7 +60,7 @@ pub extern "C" fn async_nats_connection_connect(
             client: conn,
         });
 
-        cb.0(Box::into_raw(conn), 0, cb.1);
+        cb.0(Box::into_raw(conn), std::ptr::null_mut(), cb.1);
     });
 }
 

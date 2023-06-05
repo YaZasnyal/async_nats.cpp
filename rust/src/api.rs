@@ -12,6 +12,7 @@ impl LossyConvert for CStr {
 }
 
 /// BorrowedString is a C-string with lifetime limited to a specific function call
+/// or while object that produced this string is valid
 pub type AsyncNatsBorrowedString = *const c_char;
 
 impl LossyConvert for *const c_char {

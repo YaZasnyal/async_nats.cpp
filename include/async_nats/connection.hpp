@@ -13,48 +13,6 @@
 
 namespace async_nats
 {
-class ConnectionErrorCategory : public boost::system::error_category
-{
-  // error_category interface
-public:
-  const char* name() const noexcept override
-  {
-    return "async_asio_connection_error";
-  }
-
-  std::string message(int ev) const override
-  {
-    auto str = async_nats_io_error_description(ev);
-    std::string message(str);
-    async_nats_owned_string_delete(str);
-    return message;
-  }
-
-  boost::system::error_condition default_error_condition(int ev) const noexcept override
-  {
-    auto code = async_nats_io_error_system_code(ev);
-    if (!code.has_value) {
-      return boost::system::error_condition(ev, *this);
-    }
-    return boost::system::error_condition(code.value, boost::system::system_category());
-  }
-};
-
-inline const boost::system::error_category& zstd_error_category()
-{
-  static ConnectionErrorCategory instance;
-  return instance;
-}
-
-inline boost::system::error_code make_error_code(int e)
-{
-  return boost::system::error_code(e, zstd_error_category());
-}
-
-inline boost::system::error_condition make_error_condition(int e)
-{
-  return boost::system::error_condition(e, zstd_error_category());
-}
 
 class ConnectionOptions
 {
@@ -191,10 +149,7 @@ public:
       auto ctx = new CH(std::move(token));
       ::AsyncNatsPublishCallback cb {f, ctx};
       async_nats_connection_publish_async(
-          get_raw(),
-          topic.data(),
-          {reinterpret_cast<const char*>(data.data()), data.size()},
-          cb);
+          get_raw(), topic.data(), {reinterpret_cast<const char*>(data.data()), data.size()}, cb);
     };
 
     return boost::asio::async_initiate<CompletionToken, void()>(init, token);
@@ -226,6 +181,78 @@ private:
   AsyncNatsConnection* conn_ = nullptr;
 };
 
+namespace detail
+{
+class AsyncNatsConnectError
+{
+public:
+  AsyncNatsConnectError() = delete;
+
+  AsyncNatsConnectError(::AsyncNatsConnectError* e)
+    : e_(e)
+  {
+    assert(e != nullptr);
+  }
+
+  AsyncNatsConnectError(const AsyncNatsConnectError&) = delete;
+  AsyncNatsConnectError(AsyncNatsConnectError&& o) {
+    e_ = o.e_;
+    o.e_ = nullptr;
+  }
+
+  ~AsyncNatsConnectError()
+  {
+    if(e_)
+      async_nats_connection_error_delete(e_);
+  }
+
+  AsyncNatsConnectError& operator=(const AsyncNatsConnectError&) = delete;
+  AsyncNatsConnectError& operator=(AsyncNatsConnectError&& o)
+  {
+    if(e_)
+      async_nats_connection_error_delete(e_);
+
+    e_ = o.e_;
+    o.e_ = nullptr;
+    return *this;
+  }
+
+  AsyncNatsConnectErrorKind kind() const
+  {
+    return async_nats_connection_error_kind(e_);
+  }
+
+  std::string message() const
+  {
+    auto text = async_nats_connection_error_describtion(e_);
+    std::string msg(text);
+    async_nats_owned_string_delete(text);
+    return msg;
+  }
+
+private:
+  ::AsyncNatsConnectError* e_ = nullptr;
+};
+}  // namespace detail
+
+class ConnectionError : public std::runtime_error
+{
+public:
+  ConnectionError(detail::AsyncNatsConnectError e)
+      : std::runtime_error(e.message())
+      , kind_(e.kind())
+  {
+  }
+
+  AsyncNatsConnectErrorKind kind() const
+  {
+    return kind_;
+  }
+
+private:
+  AsyncNatsConnectErrorKind kind_;
+};
+
 template<class CompletionToken>
 auto connect(const TokioRuntime& rt, const ConnectionOptions& options, CompletionToken&& token)
 {
@@ -233,13 +260,13 @@ auto connect(const TokioRuntime& rt, const ConnectionOptions& options, Completio
   {
     using CH = std::decay_t<decltype(token)>;
 
-    static auto f = [](AsyncNatsConnection* conn, AsyncNatsIoError e, void* ctx)
+    static auto f = [](AsyncNatsConnection* conn, AsyncNatsConnectError* e, void* ctx)
     {
       auto c = static_cast<CH*>(ctx);
       if (!conn) {
-        (*c)(make_error_code(e), Connection(conn));
+        (*c)(std::make_exception_ptr(ConnectionError(detail::AsyncNatsConnectError(e))), Connection(conn));
       } else {
-        (*c)(boost::system::error_code(), Connection(conn));
+        (*c)(nullptr, Connection(conn));
       }
 
       delete c;
@@ -250,7 +277,7 @@ auto connect(const TokioRuntime& rt, const ConnectionOptions& options, Completio
     async_nats_connection_connect(rt.get_raw(), options.get_raw(), cb);
   };
 
-  return boost::asio::async_initiate<CompletionToken, void(boost::system::error_code, Connection)>(
+  return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Connection)>(
       init, token);
 }
 

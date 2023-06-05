@@ -1,4 +1,11 @@
-pub type AsyncNatsMessage = async_nats::Message;
+
+pub struct AsyncNatsMessage(pub async_nats::Message);
+
+impl Into<AsyncNatsMessage> for async_nats::Message {
+    fn into(self) -> AsyncNatsMessage {
+        AsyncNatsMessage {0: self}
+    }
+}
 
 use crate::api::AsyncNatsSlice;
 
@@ -17,8 +24,8 @@ pub extern "C" fn async_nats_message_delete(msg: *mut AsyncNatsMessage) {
 pub extern "C" fn async_nats_message_topic(msg: *const AsyncNatsMessage) -> AsyncNatsSlice {
     let msg = unsafe { &*msg };
     AsyncNatsSlice {
-        data: msg.subject.as_ptr(),
-        size: msg.subject.len() as u64,
+        data: msg.0.subject.as_ptr(),
+        size: msg.0.subject.len() as u64,
     }
 }
 
@@ -28,8 +35,8 @@ pub extern "C" fn async_nats_message_topic(msg: *const AsyncNatsMessage) -> Asyn
 pub extern "C" fn async_nats_message_data(msg: *const AsyncNatsMessage) -> AsyncNatsSlice {
     let msg = unsafe { &*msg };
     AsyncNatsSlice {
-        data: msg.payload.as_ptr(),
-        size: msg.payload.len() as u64,
+        data: msg.0.payload.as_ptr(),
+        size: msg.0.payload.len() as u64,
     }
 }
 
@@ -37,7 +44,7 @@ pub extern "C" fn async_nats_message_data(msg: *const AsyncNatsMessage) -> Async
 pub extern "C" fn async_nats_message_reply_to(msg: *const AsyncNatsMessage) -> AsyncNatsSlice {
     let msg = unsafe { &*msg };
 
-    let Some(reply) = &msg.reply else {
+    let Some(reply) = &msg.0.reply else {
         return AsyncNatsSlice::default();
     };
 
