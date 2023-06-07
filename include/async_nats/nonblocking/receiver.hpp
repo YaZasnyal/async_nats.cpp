@@ -1,36 +1,54 @@
 #pragma once
 
-#include "detail/capi.h"
-#include "message.hpp"
-#include "subscribtion.hpp"
+#include <async_nats/detail/capi.h>
+#include <async_nats/message.hpp>
+#include <async_nats/subscribtion.hpp>
 
-namespace async_nats
+namespace async_nats::nonblocking
 {
-class NamedReceiver
+/**
+ * @brief The Receiver class
+ *
+ * @threadsafe this class is thread safe
+ */
+class Receiver
 {
 public:
-  NamedReceiver(Subscribtion&& sub, unsigned long long capacity = 1024)
+  Receiver(Subscribtion&& sub, unsigned long long capacity = 1024)
   {
     receiver_ = async_nats_named_receiver_new(sub.release_raw(), capacity);
   }
 
-  NamedReceiver(const NamedReceiver&) = delete;
+  Receiver(const Receiver& o)
+  {
+    receiver_ = async_nats_named_receiver_clone(o.receiver_);
+  }
 
-  NamedReceiver(NamedReceiver&& o)
+  Receiver(Receiver&& o)
   {
     receiver_ = o.receiver_;
     o.receiver_ = nullptr;
   }
 
-  ~NamedReceiver()
+  ~Receiver()
   {
     if (receiver_)
       async_nats_named_receiver_delete(receiver_);
   }
 
-  NamedReceiver& operator=(const NamedReceiver&) = delete;
+  Receiver& operator=(const Receiver& o)
+  {
+    if (this == &o)
+      return *this;
 
-  NamedReceiver& operator=(NamedReceiver&& o)
+    if (receiver_)
+      async_nats_named_receiver_delete(receiver_);
+
+    receiver_ = async_nats_named_receiver_clone(o.receiver_);
+    return *this;
+  }
+
+  Receiver& operator=(Receiver&& o)
   {
     if (this == &o)
       return *this;
@@ -45,6 +63,10 @@ public:
 
   /**
    * @brief recv blocks current thread untill a message is available
+   *
+   * If this methods if called from multiple threads only one thread is going to receive a new
+   * message.
+   *
    * @return A new message
    */
   Message recv() const
@@ -67,4 +89,4 @@ private:
   AsyncNatsNamedReceiver* receiver_;
 };
 
-}  // namespace async_nats
+}  // namespace async_nats::nonblocking

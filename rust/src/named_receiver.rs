@@ -4,6 +4,7 @@ use crate::message::AsyncNatsMessage;
 use crate::subscribtion::AsyncNatsSubscribtion;
 use crossbeam::channel::{bounded, Receiver};
 
+#[derive(Clone)]
 pub struct AsyncNatsNamedReceiver {
     receiver: Receiver<async_nats::Message>,
 }
@@ -34,6 +35,14 @@ pub extern "C" fn async_nats_named_receiver_new(
     let sub = unsafe { Box::from_raw(s) };
     let recv = Box::new(AsyncNatsNamedReceiver::new(*sub, capacity as usize));
     Box::into_raw(recv)
+}
+
+#[no_mangle]
+pub extern "C" fn async_nats_named_receiver_clone(
+    recv: *const AsyncNatsNamedReceiver,
+) -> *mut AsyncNatsNamedReceiver {
+    let receiver = unsafe { &*recv };
+    Box::into_raw(Box::new(receiver.clone()))
 }
 
 #[no_mangle]

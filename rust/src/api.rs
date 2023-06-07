@@ -61,24 +61,24 @@ impl Default for AsyncNatsSlice {
     }
 }
 
-#[repr(C)]
-pub struct Optional<T> {
-    has_value: bool,
-    value: T,
-}
+// #[repr(C)]
+// pub struct Optional<T> {
+//     has_value: bool,
+//     value: T,
+// }
 
-impl<T: Default> Optional<T> {
-    pub fn some(val: T) -> Self {
-        Self {
-            has_value: true,
-            value: val,
-        }
-    }
+// impl<T: Default> Optional<T> {
+//     pub fn some(val: T) -> Self {
+//         Self {
+//             has_value: true,
+//             value: val,
+//         }
+//     }
 
-    pub fn none() -> Self {
-        Self {
-            has_value: false,
-            value: T::default(),
-        }
-    }
-}
+//     pub fn none() -> Self {
+//         Self {
+//             has_value: false,
+//             value: T::default(),
+//         }
+//     }
+// }

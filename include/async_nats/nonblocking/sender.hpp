@@ -5,42 +5,48 @@
 
 #include <boost/asio/buffer.hpp>
 
-#include "connection.hpp"
-#include "detail/capi.h"
+#include <async_nats/connection.hpp>
+#include <async_nats/detail/capi.h>
 
-namespace async_nats
+namespace async_nats::nonblocking
 {
-class NamedSender
+
+/**
+ * @brief The Sender class
+ *
+ * @threadsafe this class is thread safe
+ */
+class Sender
 {
 public:
-  NamedSender(const std::string& topic, const Connection& conn)
+  Sender(const std::string& topic, const Connection& conn)
   {
     sender = async_nats_named_sender_new(topic.c_str(), conn.get_raw(), 1024);
   }
 
-  NamedSender(const std::string& topic, const Connection& conn, std::size_t capacity)
+  Sender(const std::string& topic, const Connection& conn, std::size_t capacity)
   {
     sender = async_nats_named_sender_new(topic.c_str(), conn.get_raw(), capacity);
   }
 
-  NamedSender(const NamedSender& o)
+  Sender(const Sender& o)
   {
     sender = async_nats_named_sender_clone(o.get_raw());
   }
 
-  NamedSender(NamedSender&& o)
+  Sender(Sender&& o)
   {
     sender = o.sender;
     o.sender = nullptr;
   }
 
-  ~NamedSender()
+  ~Sender()
   {
     if (sender)
       async_nats_named_sender_delete(sender);
   }
 
-  NamedSender& operator=(const NamedSender& o)
+  Sender& operator=(const Sender& o)
   {
     if (this == &o)
       return *this;
@@ -52,7 +58,7 @@ public:
     return *this;
   }
 
-  NamedSender& operator=(NamedSender&& o)
+  Sender& operator=(Sender&& o)
   {
     if (this == &o)
       return *this;

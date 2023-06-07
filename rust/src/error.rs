@@ -1,4 +1,4 @@
-use crate::api::{AsyncNatsOwnedString, AsyncNatsBorrowedString, AsyncNatsSlice};
+use crate::api::AsyncNatsOwnedString;
 
 // pub type AsyncNatsError = i32;
 
@@ -56,9 +56,7 @@ pub extern "C" fn async_nats_connection_error_describtion(
 }
 
 #[no_mangle]
-pub extern "C" fn async_nats_connection_error_delete(
-    err: *mut AsyncNatsConnectError,
-) {
+pub extern "C" fn async_nats_connection_error_delete(err: *mut AsyncNatsConnectError) {
     unsafe {
         drop(Box::from_raw(err));
     }

@@ -182,6 +182,8 @@ struct AsyncNatsSlice async_nats_message_reply_to(const struct AsyncNatsMessage 
  */
 struct AsyncNatsSlice async_nats_message_topic(const struct AsyncNatsMessage *msg);
 
+struct AsyncNatsNamedReceiver *async_nats_named_receiver_clone(const struct AsyncNatsNamedReceiver *recv);
+
 void async_nats_named_receiver_delete(struct AsyncNatsNamedReceiver *recv);
 
 struct AsyncNatsNamedReceiver *async_nats_named_receiver_new(struct AsyncNatsSubscribtion *s,
