@@ -148,6 +148,8 @@ AsyncNatsOwnedString async_nats_connection_error_describtion(const struct AsyncN
 
 enum AsyncNatsConnectErrorKind async_nats_connection_error_kind(const struct AsyncNatsConnectError *err);
 
+AsyncNatsOwnedString async_nats_connection_mailbox(struct AsyncNatsConnection *conn);
+
 /**
  * Publish data asynchronously.
  *

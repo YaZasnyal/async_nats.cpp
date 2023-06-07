@@ -24,6 +24,14 @@ impl LossyConvert for *const c_char {
 // OwnedString is a C-string whose lifetime is passed between the API bondary
 pub type AsyncNatsOwnedString = *mut c_char;
 
+/// Convert String to AsyncNatsOwnedString
+///
+/// This function panics if conversion cannot be made
+pub(crate) fn string_to_owned_string(s: String) -> AsyncNatsOwnedString {
+    let err = std::ffi::CString::new(s.as_bytes()).expect("Unable to convert error into CString");
+    std::ffi::CString::into_raw(err)
+}
+
 // AsyncString is a C-string which must be valid untill a callback is called
 pub type AsyncNatsAsyncString = AsyncNatsBorrowedString;
 

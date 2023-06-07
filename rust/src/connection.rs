@@ -80,6 +80,15 @@ pub extern "C" fn async_nats_connection_delete(conn: *mut AsyncNatsConnection) {
     }
 }
 
+#[no_mangle]
+pub extern "C" fn async_nats_connection_mailbox(
+    conn: *mut AsyncNatsConnection,
+) -> AsyncNatsOwnedString {
+    let conn = unsafe { &*conn };
+    let mailbox = conn.client.new_inbox();
+    crate::api::string_to_owned_string(mailbox)
+}
+
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct AsyncNatsPublishCallback(extern "C" fn(d: *mut c_void), *mut c_void);

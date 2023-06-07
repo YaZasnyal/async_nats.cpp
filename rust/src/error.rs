@@ -50,9 +50,7 @@ pub extern "C" fn async_nats_connection_error_describtion(
     err: *const AsyncNatsConnectError,
 ) -> AsyncNatsOwnedString {
     let err = unsafe { &*err };
-    let err = std::ffi::CString::new(err.0.to_string().as_bytes())
-        .expect("Unable to convert error into CString");
-    std::ffi::CString::into_raw(err)
+    crate::api::string_to_owned_string(err.0.to_string())
 }
 
 #[no_mangle]

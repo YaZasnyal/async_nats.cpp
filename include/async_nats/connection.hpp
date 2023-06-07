@@ -7,13 +7,12 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/system/error_code.hpp>
 
-#include "async_nats/detail/capi.h"
-#include "async_nats/subscribtion.hpp"
-#include "async_nats/tokio_runtime.hpp"
+#include <async_nats/detail/owned_string.h>
+#include <async_nats/subscribtion.hpp>
+#include <async_nats/tokio_runtime.hpp>
 
 namespace async_nats
 {
-
 class ConnectionOptions
 {
 public:
@@ -127,6 +126,14 @@ public:
   }
 
   /**
+   * @brief new_mailbox function generates new random string that can be used for replies
+   */
+  detail::OwnedString new_mailbox() const
+  {
+    return detail::OwnedString(async_nats_connection_mailbox(conn_));
+  }
+
+  /**
    * @brief publish
    * @param topic
    * @param data
@@ -189,27 +196,28 @@ public:
   AsyncNatsConnectError() = delete;
 
   AsyncNatsConnectError(::AsyncNatsConnectError* e)
-    : e_(e)
+      : e_(e)
   {
     assert(e != nullptr);
   }
 
   AsyncNatsConnectError(const AsyncNatsConnectError&) = delete;
-  AsyncNatsConnectError(AsyncNatsConnectError&& o) {
+  AsyncNatsConnectError(AsyncNatsConnectError&& o)
+  {
     e_ = o.e_;
     o.e_ = nullptr;
   }
 
   ~AsyncNatsConnectError()
   {
-    if(e_)
+    if (e_)
       async_nats_connection_error_delete(e_);
   }
 
   AsyncNatsConnectError& operator=(const AsyncNatsConnectError&) = delete;
   AsyncNatsConnectError& operator=(AsyncNatsConnectError&& o)
   {
-    if(e_)
+    if (e_)
       async_nats_connection_error_delete(e_);
 
     e_ = o.e_;
@@ -264,7 +272,8 @@ auto connect(const TokioRuntime& rt, const ConnectionOptions& options, Completio
     {
       auto c = static_cast<CH*>(ctx);
       if (!conn) {
-        (*c)(std::make_exception_ptr(ConnectionError(detail::AsyncNatsConnectError(e))), Connection(conn));
+        (*c)(std::make_exception_ptr(ConnectionError(detail::AsyncNatsConnectError(e))),
+             Connection(conn));
       } else {
         (*c)(nullptr, Connection(conn));
       }
@@ -277,8 +286,8 @@ auto connect(const TokioRuntime& rt, const ConnectionOptions& options, Completio
     async_nats_connection_connect(rt.get_raw(), options.get_raw(), cb);
   };
 
-  return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Connection)>(
-      init, token);
+  return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Connection)>(init,
+                                                                                            token);
 }
 
 }  // namespace async_nats
