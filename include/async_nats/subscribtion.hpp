@@ -7,6 +7,12 @@
 
 namespace async_nats
 {
+
+/**
+ * @brief The Subscribtion class
+ *
+ * @threadsafe This class is NOT thread safe
+ */
 class Subscribtion
 {
 public:

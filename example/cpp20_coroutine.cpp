@@ -26,7 +26,7 @@ auto main(int, char**) -> int
   boost::asio::io_context ctx;
 
   try {
-    auto connection =
+    async_nats::Connection connection =
         async_nats::connect(
             rt,
             async_nats::ConnectionOptions().name("test_app").address("nats://localhost:4222"),
@@ -35,8 +35,9 @@ auto main(int, char**) -> int
 
     boost::asio::co_spawn(ctx, example_task(connection), boost::asio::detached);
     ctx.run();
-  } catch (const std::exception& e) {
-    std::cerr << e.what() << std::endl;
+  } catch (const async_nats::ConnectionError& e) {
+    std::cerr << "ConnectionError: type=" << e.kind() << "; text='" << e.what() << "'"
+              << std::endl;
     return -1;
   }
 
@@ -46,7 +47,7 @@ auto main(int, char**) -> int
 boost::asio::awaitable<void> example_task(async_nats::Connection conn)
 {
   // subscribe for messages
-  auto sub = co_await conn.subcribe("test", boost::asio::use_awaitable);
+  async_nats::Subscribtion sub = co_await conn.subcribe("test", boost::asio::use_awaitable);
 
   // prepare and send a message
   std::string message = "Hello world!";
@@ -58,5 +59,5 @@ boost::asio::awaitable<void> example_task(async_nats::Connection conn)
   async_nats::Message msg = co_await sub.receive(boost::asio::use_awaitable);
   if (!msg)
     co_return;
-  std::cout << msg.Topic() << ": " << msg.Data() << std::endl;
+  std::cout << msg.topic() << ": " << msg.data() << std::endl;
 }

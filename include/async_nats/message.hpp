@@ -49,19 +49,19 @@ public:
     return message_ != nullptr;
   }
 
-  std::string_view Topic() const
+  std::string_view topic() const
   {
     auto slice = async_nats_message_topic(message_);
     return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
   }
 
-  std::string_view Data() const
+  std::string_view data() const
   {
     auto slice = async_nats_message_data(message_);
     return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
   }
 
-  std::optional<std::string_view> ReplyTo() const
+  std::optional<std::string_view> reply_to() const
   {
     auto slice = async_nats_message_reply_to(message_);
     if (slice.data) {

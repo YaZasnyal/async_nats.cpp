@@ -62,25 +62,25 @@ public:
   }
 
   /**
-   * @brief recv blocks current thread untill a message is available
+   * @brief receive blocks current thread untill a message is available
    *
    * If this methods if called from multiple threads only one thread is going to receive a new
    * message.
    *
    * @return A new message
    */
-  Message recv() const
+  Message receive() const
   {
     return Message(async_nats_named_receiver_recv(receiver_));
   }
 
   /**
-   * @brief try_recv checks if message is available
+   * @brief try_receive checks if message is available
    *
    * This function never blocks.
    * @return A new message if avalable
    */
-  Message try_recv() const
+  Message try_receive() const
   {
     return Message(async_nats_named_receiver_try_recv(receiver_));
   }

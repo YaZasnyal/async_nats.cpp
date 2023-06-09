@@ -55,6 +55,11 @@ private:
   AsyncNatsConnetionParams* options_;
 };
 
+/**
+ * @brief The Connection class is used to access nats server
+ *
+ * @threadsafe This class is thread safe
+ */
 class Connection
 {
 public:
@@ -261,6 +266,16 @@ private:
   AsyncNatsConnectErrorKind kind_;
 };
 
+/**
+ * @brief connect tries to establish a new connection
+ *
+ * The result of this operation is either established Connection or ConnectionError in
+ * std::exception_ptr.
+ *
+ * @param rt - Tokio runtime object
+ * @param options - connection options
+ * @param token - asio completion token
+ */
 template<class CompletionToken>
 auto connect(const TokioRuntime& rt, const ConnectionOptions& options, CompletionToken&& token)
 {

@@ -67,6 +67,11 @@ target_compile_features(async_nats_async_nats INTERFACE cxx_std_17)
 find_package(fmt REQUIRED)
 find_package(Boost REQUIRED)
 
+if(APPLE)
+    find_library(SECURITY_FRAMEWORK Security REQUIRED)
+    find_library(CORE_FOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+endif()
+
 target_link_libraries(async_nats_async_nats
   INTERFACE
   Boost::boost
@@ -77,6 +82,12 @@ target_link_libraries(async_nats_async_nats
   $<$<BOOL:${WIN32}>:Crypt32>
   $<$<BOOL:${WIN32}>:Ncrypt>
   $<$<BOOL:${WIN32}>:Secur32>
+
+  # macos
+  $<$<BOOL:${APPLE}>:${SECURITY_FRAMEWORK}>
+  $<$<BOOL:${APPLE}>:${CORE_FOUNDATION_FRAMEWORK}>
+
+  # TODO: linux
 )
 
 
