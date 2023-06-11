@@ -262,11 +262,33 @@ public:
                                                                                            token);
   }
 
-  //  template<class CompletionToken>
-  //  auto request(AsyncNatsAsyncString topic, Request&& req, CompletionToken&& token)
-  //  {
-  //        async_nats_connection_send_request_async(conn_, topic, req.release(), cb);
-  //  }
+  template<class CompletionToken>
+  auto request(AsyncNatsAsyncString topic, Request&& req, CompletionToken&& token)
+  {
+    auto init = [&](auto token)
+    {
+      using CH = std::decay_t<decltype(token)>;
+
+      static auto f = [](AsyncNatsMessage* msg, AsyncNatsRequestError* e, void* ctx)
+      {
+        auto c = static_cast<CH*>(ctx);
+        if (!msg) {
+          (*c)(std::make_exception_ptr(RequestError(e)), Message());
+        } else {
+          (*c)(nullptr, Message(msg));
+        }
+
+        delete c;
+      };
+
+      auto ctx = new CH(std::move(token));
+      ::AsyncNatsRequestCallback cb {f, ctx};
+      async_nats_connection_send_request_async(conn_, topic, req.release(), cb);
+    };
+
+    return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Message)>(init,
+                                                                                           token);
+  }
 
 private:
   AsyncNatsConnection* conn_ = nullptr;

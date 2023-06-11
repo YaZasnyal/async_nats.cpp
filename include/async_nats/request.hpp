@@ -67,7 +67,9 @@ public:
   Request& timeout(std::chrono::steady_clock::duration duration)
   {
     async_nats_request_timeout(
-        request_, std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
+        request_,
+        static_cast<uint64_t>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()));
     return *this;
   }
 

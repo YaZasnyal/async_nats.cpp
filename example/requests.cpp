@@ -1,3 +1,4 @@
+#include <format>
 #include <iostream>
 
 #include <boost/asio.hpp>
@@ -31,12 +32,15 @@ auto main(int, char**) -> int
 
     // receive the request
     async_nats::Message msg = sub.receive(boost::asio::use_future).get();
-    std::cout << "Received request: topic='" << msg.topic() << "'; text='" << msg.data()
-              << "'; reply_to='" << *msg.reply_to() << std::endl;
+    std::cout << std::format("Received request: topic='{}'; text='{}'; reply_to='{}'",
+                             msg.topic(),
+                             msg.data(),
+                             *msg.reply_to())
+              << std::endl;
 
     // format a response and send it back
     std::string reply_text = std::string("Hello, ").append(msg.data()).append("!");
-    std::cout << "Sending reply to: " << msg.reply_to().value() << std::endl;
+    std::cout << std::format("Sending reply to: {}", msg.reply_to().value()) << std::endl;
     connection
         .publish(msg.reply_to().value(),
                  boost::asio::const_buffer(reply_text.data(), reply_text.size()),
@@ -45,13 +49,16 @@ auto main(int, char**) -> int
 
     // await and print the response
     async_nats::Message response = req.get();
-    std::cout << response.topic() << ": " << response.data() << std::endl;
+    std::cout << std::format("{}: {}", response.topic(), response.data()) << std::endl;
   } catch (const async_nats::ConnectionError& e) {
-    std::cerr << "ConnectionError: type=" << e.kind() << "; text='" << e.what() << "'"
+    std::cerr << std::format(
+        "ConnectionError: type={}; text='{}'", static_cast<int>(e.kind()), e.what())
               << std::endl;
     return -1;
   } catch (const async_nats::RequestError& e) {
-    std::cerr << "RequestError: type=" << e.kind() << "; text='" << e.what() << "'" << std::endl;
+    std::cerr << std::format(
+        "RequestError: type={}; text='{}'", static_cast<int>(e.kind()), e.what())
+              << std::endl;
     return -2;
   }
 
