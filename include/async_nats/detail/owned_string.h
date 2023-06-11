@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string_view>
+
 #include "capi.h"
 
 namespace async_nats::detail
@@ -45,7 +47,12 @@ public:
     return *this;
   }
 
-  operator const char*() const
+  operator AsyncNatsAsyncString() const
+  {
+    return s_;
+  }
+
+  operator std::string_view() const
   {
     return s_;
   }

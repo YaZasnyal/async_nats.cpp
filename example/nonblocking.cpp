@@ -18,19 +18,20 @@ auto main(int, char**) -> int
             boost::asio::use_future)
             .get();
 
+    // generate random topic
+    async_nats::detail::OwnedString mailbox = connection.new_mailbox();
+
     // subscribe for new events
     // NOTE: creating subscribtion is an async operation and is going to block current thread
     // other completion handlers like callback can be used instead.
-    async_nats::Subscribtion sub = connection.subcribe("test", boost::asio::use_future).get();
+    async_nats::Subscribtion sub = connection.subcribe(mailbox, boost::asio::use_future).get();
     async_nats::nonblocking::Receiver recv(std::move(sub));
 
     // create sender
     // This operation does not block
-    async_nats::nonblocking::Sender sender("test", connection);
+    async_nats::nonblocking::Sender sender(mailbox, connection);
 
     // send a message
-    // this method MAY block if there the message cannot be enqueued immediately
-    // use try_send for read non-blocking send
     std::string message = "Hello world!";
     sender.send(boost::asio::const_buffer(message.data(), message.size()));
 

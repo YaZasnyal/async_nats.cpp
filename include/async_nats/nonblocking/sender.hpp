@@ -19,12 +19,22 @@ namespace async_nats::nonblocking
 class Sender
 {
 public:
-  Sender(const std::string& topic, const Connection& conn)
+  Sender(AsyncNatsAsyncString topic, const Connection& conn)
+  {
+    sender = async_nats_named_sender_new(topic, conn.get_raw(), 1024);
+  }
+
+  Sender(const char* topic, const Connection& conn, std::size_t capacity)
+  {
+    sender = async_nats_named_sender_new(topic, conn.get_raw(), capacity);
+  }
+
+  explicit Sender(const std::string& topic, const Connection& conn)
   {
     sender = async_nats_named_sender_new(topic.c_str(), conn.get_raw(), 1024);
   }
 
-  Sender(const std::string& topic, const Connection& conn, std::size_t capacity)
+  explicit Sender(const std::string& topic, const Connection& conn, std::size_t capacity)
   {
     sender = async_nats_named_sender_new(topic.c_str(), conn.get_raw(), capacity);
   }

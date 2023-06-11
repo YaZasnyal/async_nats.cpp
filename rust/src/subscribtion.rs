@@ -38,9 +38,15 @@ impl AsyncNatsSubscribtion {
 
 #[no_mangle]
 pub extern "C" fn async_nats_subscribtion_delete(s: *mut AsyncNatsSubscribtion) {
-    unsafe {
-        drop(Box::from_raw(s));
-    }
+    let mut s = unsafe {
+        Box::from_raw(s)
+    };
+    
+    let rt = s.rt.clone();
+    rt.block_on(async move {
+        s.inner.sub.unsubscribe().await.ok();
+        drop(s);
+    })
 }
 
 #[repr(C)]

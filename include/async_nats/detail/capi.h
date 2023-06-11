@@ -17,32 +17,49 @@ typedef enum AsyncNatsConnectErrorKind
   /**
    * Parsing the passed server address failed.
    */
-  ServerParse,
+  AsyncNats_Connect_ServerParse,
   /**
    * DNS related issues.
    */
-  Dns,
+  AsyncNats_Connect_Dns,
   /**
    * Failed authentication process, signing nonce, etc.
    */
-  Authentication,
+  AsyncNats_Connect_Authentication,
   /**
    * Server returned authorization violation error.
    */
-  AuthorizationViolation,
+  AsyncNats_Connect_AuthorizationViolation,
   /**
    * Connect timed out.
    */
-  TimedOut,
+  AsyncNats_Connect_TimedOut,
   /**
    * Erroneous TLS setup.
    */
-  Tls,
+  AsyncNatsConnectTls,
   /**
    * Other IO error.
    */
-  Io,
+  AsyncNats_ConnectIo,
 } AsyncNatsConnectErrorKind;
+
+typedef enum AsyncNatsRequestErrorKind
+{
+  /**
+   * There are services listening on requested subject, but they didn't respond
+   * in time.
+   */
+  AsyncNats_Request_TimedOut,
+  /**
+   * No one is listening on request subject.
+   */
+  AsyncNats_Request_NoResponders,
+  /**
+   * Other errors, client/io related.
+   */
+  AsyncNats_Request_Other,
+} AsyncNatsRequestErrorKind;
 
 typedef struct AsyncNatsConnectError AsyncNatsConnectError;
 
@@ -55,6 +72,10 @@ typedef struct AsyncNatsMessage AsyncNatsMessage;
 typedef struct AsyncNatsNamedReceiver AsyncNatsNamedReceiver;
 
 typedef struct AsyncNatsNamedSender AsyncNatsNamedSender;
+
+typedef struct AsyncNatsRequest AsyncNatsRequest;
+
+typedef struct AsyncNatsRequestError AsyncNatsRequestError;
 
 typedef struct AsyncNatsRuntimeConfig AsyncNatsRuntimeConfig;
 
@@ -78,7 +99,11 @@ typedef struct AsyncNatsConnectCallback
 
 typedef char *AsyncNatsOwnedString;
 
-typedef AsyncNatsBorrowedString AsyncNatsAsyncString;
+typedef struct AsyncNatsSlice
+{
+  const uint8_t *data;
+  uint64_t size;
+} AsyncNatsSlice;
 
 /**
  * BorrowedMessage represents a byte stream with a lifetime limited to a
@@ -102,17 +127,19 @@ typedef struct AsyncNatsPublishCallback
   void *_1;
 } AsyncNatsPublishCallback;
 
+typedef AsyncNatsBorrowedString AsyncNatsAsyncString;
+
+typedef struct AsyncNatsRequestCallback
+{
+  void (*_0)(struct AsyncNatsMessage *msg, struct AsyncNatsRequestError *err, void *d);
+  void *_1;
+} AsyncNatsRequestCallback;
+
 typedef struct AsyncNatsSubscribeCallback
 {
   void (*_0)(struct AsyncNatsSubscribtion *sub, AsyncNatsOwnedString err, void *d);
   void *_1;
 } AsyncNatsSubscribeCallback;
-
-typedef struct AsyncNatsSlice
-{
-  const uint8_t *data;
-  uint64_t size;
-} AsyncNatsSlice;
 
 typedef struct AsyncNatsReceiveCallback
 {
@@ -156,9 +183,19 @@ AsyncNatsOwnedString async_nats_connection_mailbox(struct AsyncNatsConnection *c
  * topic and message: must be valid until callback is called.
  */
 void async_nats_connection_publish_async(const struct AsyncNatsConnection *conn,
-                                         AsyncNatsAsyncString topic,
+                                         struct AsyncNatsSlice topic,
                                          AsyncNatsAsyncMessage message,
                                          struct AsyncNatsPublishCallback cb);
+
+void async_nats_connection_request_async(const struct AsyncNatsConnection *conn,
+                                         AsyncNatsAsyncString topic,
+                                         AsyncNatsAsyncMessage message,
+                                         struct AsyncNatsRequestCallback cb);
+
+void async_nats_connection_send_request_async(const struct AsyncNatsConnection *conn,
+                                              AsyncNatsAsyncString topic,
+                                              struct AsyncNatsRequest *request,
+                                              struct AsyncNatsRequestCallback cb);
 
 void async_nats_connection_subscribe_async(const struct AsyncNatsConnection *conn,
                                            AsyncNatsAsyncString topic,
@@ -212,6 +249,22 @@ bool async_nats_named_sender_try_send(const struct AsyncNatsNamedSender *sender,
                                       struct AsyncNatsBorrowedMessage data);
 
 void async_nats_owned_string_delete(AsyncNatsOwnedString s);
+
+void async_nats_request_delete(struct AsyncNatsRequest *req);
+
+void async_nats_request_error_delete(struct AsyncNatsRequestError *err);
+
+AsyncNatsOwnedString async_nats_request_error_describtion(const struct AsyncNatsRequestError *err);
+
+enum AsyncNatsRequestErrorKind async_nats_request_error_kind(const struct AsyncNatsRequestError *err);
+
+void async_nats_request_inbox(struct AsyncNatsRequest *req, AsyncNatsAsyncString inbox);
+
+void async_nats_request_message(struct AsyncNatsRequest *req, AsyncNatsAsyncMessage message);
+
+struct AsyncNatsRequest *async_nats_request_new(void);
+
+void async_nats_request_timeout(struct AsyncNatsRequest *req, uint64_t timeout);
 
 void async_nats_subscribtion_delete(struct AsyncNatsSubscribtion *s);
 

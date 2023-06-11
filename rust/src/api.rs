@@ -69,6 +69,15 @@ impl Default for AsyncNatsSlice {
     }
 }
 
+impl LossyConvert for AsyncNatsSlice {
+    fn lossy_convert(&self) -> String {
+        String::from_utf8_lossy(unsafe {
+            core::slice::from_raw_parts::<u8>(self.data, self.size as usize)
+        })
+        .into()
+    }
+}
+
 // #[repr(C)]
 // pub struct Optional<T> {
 //     has_value: bool,

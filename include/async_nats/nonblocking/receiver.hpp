@@ -78,6 +78,7 @@ public:
    * @brief try_receive checks if message is available
    *
    * This function never blocks.
+   *
    * @return A new message if avalable
    */
   Message try_receive() const

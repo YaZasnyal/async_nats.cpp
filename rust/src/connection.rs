@@ -3,7 +3,7 @@ use crate::tokio_runtime::AsyncNatsTokioRuntime;
 
 use crate::api::{
     AsyncNatsAsyncMessage, AsyncNatsAsyncString, AsyncNatsBorrowedString, AsyncNatsOwnedString,
-    LossyConvert,
+    AsyncNatsSlice, LossyConvert,
 };
 use crate::subscribtion::AsyncNatsSubscribtion;
 use async_nats::{connect_with_options, Client, ConnectOptions, ServerAddr};
@@ -100,7 +100,7 @@ unsafe impl Send for AsyncNatsPublishCallback {}
 #[no_mangle]
 pub extern "C" fn async_nats_connection_publish_async(
     conn: *const AsyncNatsConnection,
-    topic: AsyncNatsAsyncString,
+    topic: AsyncNatsSlice,
     message: AsyncNatsAsyncMessage,
     cb: AsyncNatsPublishCallback,
 ) {
