@@ -21,5 +21,6 @@ function(add_example NAME)
 endfunction()
 
 add_example(cpp20_coroutine)
+add_example(nonblocking)
 
 add_folders(Example)
