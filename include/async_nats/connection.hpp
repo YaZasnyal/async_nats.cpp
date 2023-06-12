@@ -211,6 +211,8 @@ public:
     return boost::asio::async_initiate<CompletionToken, void()>(init, token);
   }
 
+  /// @todo TODO: publish with headers and reply target
+
   template<class CompletionToken>
   auto subcribe(AsyncNatsAsyncString topic, CompletionToken&& token)
   {

@@ -9,3 +9,9 @@ prefix/
 CMakeLists.txt.user
 CMakeUserPresets.json
 target
+
+# conan 
+conan.lock
+conanbuildinfo.txt
+graph_info.json
+conaninfo.txt
