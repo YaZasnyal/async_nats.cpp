@@ -7,6 +7,7 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/system/error_code.hpp>
 
+#include <async_nats/detail/helpers.hpp>
 #include <async_nats/detail/owned_string.h>
 #include <async_nats/request.hpp>
 #include <async_nats/subscribtion.hpp>
@@ -194,10 +195,10 @@ public:
       {
         auto c = static_cast<CH*>(ctx);
         (*c)();
-        delete c;
+        detail::deallocate_ctx(c);
       };
 
-      auto ctx = new CH(std::move(token));
+      auto ctx = detail::allocate_ctx(std::move(token));
       ::AsyncNatsPublishCallback cb {f, ctx};
       std::string t(topic.data(), topic.size());
       async_nats_connection_publish_async(
@@ -213,7 +214,7 @@ public:
   template<class CompletionToken>
   auto subcribe(AsyncNatsAsyncString topic, CompletionToken&& token)
   {
-    auto init = [&](auto token)
+    auto init = [&](auto token, AsyncNatsAsyncString topic)
     {
       using CH = std::decay_t<decltype(token)>;
 
@@ -222,15 +223,15 @@ public:
         /// @todo TODO: process error
         auto c = static_cast<CH*>(ctx);
         (*c)(Subscribtion(sub));
-        delete c;
+        detail::deallocate_ctx(c);
       };
 
-      auto ctx = new CH(std::move(token));
+      auto ctx = detail::allocate_ctx(std::move(token));
       ::AsyncNatsSubscribeCallback cb {f, ctx};
       async_nats_connection_subscribe_async(get_raw(), topic, cb);
     };
 
-    return boost::asio::async_initiate<CompletionToken, void(Subscribtion)>(init, token);
+    return boost::asio::async_initiate<CompletionToken, void(Subscribtion)>(init, token, topic);
   }
 
   template<class CompletionToken>
@@ -249,10 +250,10 @@ public:
           (*c)(nullptr, Message(msg));
         }
 
-        delete c;
+        detail::deallocate_ctx(c);
       };
 
-      auto ctx = new CH(std::move(token));
+      auto ctx = detail::allocate_ctx(std::move(token));
       ::AsyncNatsRequestCallback cb {f, ctx};
       async_nats_connection_request_async(
           conn_, topic, {reinterpret_cast<const char*>(data.data()), data.size()}, cb);
@@ -278,10 +279,10 @@ public:
           (*c)(nullptr, Message(msg));
         }
 
-        delete c;
+        detail::deallocate_ctx(c);
       };
 
-      auto ctx = new CH(std::move(token));
+      auto ctx = detail::allocate_ctx(std::move(token));
       ::AsyncNatsRequestCallback cb {f, ctx};
       async_nats_connection_send_request_async(conn_, topic, req.release(), cb);
     };
@@ -320,10 +321,10 @@ auto connect(const TokioRuntime& rt, const ConnectionOptions& options, Completio
         (*c)(nullptr, Connection(conn));
       }
 
-      delete c;
+      detail::deallocate_ctx(c);
     };
 
-    auto ctx = new CH(std::move(token));
+    auto ctx = detail::allocate_ctx(std::move(token));
     ::AsyncNatsConnectCallback cb {f, ctx};
     async_nats_connection_connect(rt.get_raw(), options.get_raw(), cb);
   };

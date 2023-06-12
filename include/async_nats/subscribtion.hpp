@@ -2,12 +2,12 @@
 
 #include <boost/asio/async_result.hpp>
 
-#include "async_nats/detail/capi.h"
-#include "async_nats/message.hpp"
+#include <async_nats/detail/capi.h>
+#include <async_nats/detail/helpers.hpp>
+#include <async_nats/message.hpp>
 
 namespace async_nats
 {
-
 /**
  * @brief The Subscribtion class
  *
@@ -78,10 +78,10 @@ public:
       {
         auto c = static_cast<CH*>(ctx);
         (*c)(Message(msg));
-        delete c;
+        detail::deallocate_ctx(c);
       };
 
-      auto ctx = new CH(std::move(token));
+      auto ctx = detail::allocate_ctx(std::move(token));
       ::AsyncNatsReceiveCallback cb {f, ctx};
       async_nats_subscribtion_receive_async(get_raw(), cb);
     };

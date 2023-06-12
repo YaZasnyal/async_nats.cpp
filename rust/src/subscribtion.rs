@@ -43,10 +43,10 @@ pub extern "C" fn async_nats_subscribtion_delete(s: *mut AsyncNatsSubscribtion) 
     };
     
     let rt = s.rt.clone();
-    rt.block_on(async move {
+    rt.spawn(async move {
         s.inner.sub.unsubscribe().await.ok();
         drop(s);
-    })
+    });
 }
 
 #[repr(C)]
