@@ -23,5 +23,6 @@ endfunction()
 add_example(cpp20_coroutine)
 add_example(nonblocking)
 add_example(requests)
+add_example(custom_allocator)
 
 add_folders(Example)
