@@ -70,7 +70,7 @@ pub extern "C" fn async_nats_subscribtion_receive_async(
             return;
         };
 
-        let boxed_msg = Box::new(AsyncNatsMessage(msg));
+        let boxed_msg: Box<AsyncNatsMessage> = Box::new(msg.into());
         cb.0(Box::into_raw(boxed_msg), cb.1);
     });
 }

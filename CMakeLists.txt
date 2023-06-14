@@ -64,7 +64,6 @@ target_compile_features(async_nats_async_nats INTERFACE cxx_std_17)
 
 # ---- Dependencies ----
 
-find_package(fmt REQUIRED)
 find_package(Boost REQUIRED)
 
 if(APPLE)

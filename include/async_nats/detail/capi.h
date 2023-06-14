@@ -202,6 +202,11 @@ void async_nats_connection_subscribe_async(const struct AsyncNatsConnection *con
                                            struct AsyncNatsSubscribeCallback cb);
 
 /**
+ * Increments reference counter
+ */
+struct AsyncNatsMessage *async_nats_message_clone(struct AsyncNatsMessage *msg);
+
+/**
  * Returs Slice with payload details
  * Slice is valid while NatsMessage is valid
  */
@@ -214,6 +219,8 @@ struct AsyncNatsSlice async_nats_message_data(const struct AsyncNatsMessage *msg
 void async_nats_message_delete(struct AsyncNatsMessage *msg);
 
 struct AsyncNatsSlice async_nats_message_reply_to(const struct AsyncNatsMessage *msg);
+
+AsyncNatsOwnedString async_nats_message_to_string(const struct AsyncNatsMessage *msg);
 
 /**
  * Returns C-string with topic that was used to publish this message

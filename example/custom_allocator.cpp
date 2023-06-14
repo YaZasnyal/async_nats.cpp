@@ -60,7 +60,7 @@ boost::asio::awaitable<void> example_task(async_nats::TokioRuntime& rt)
   co_await conn.publish(
       "test", boost::asio::const_buffer(message.data(), message.size()), token());
 
-  // read a message from the sub
+  // read the message from the sub
   async_nats::Message msg = co_await sub.receive(token());
   if (!msg)
     co_return;

@@ -36,7 +36,7 @@ pub extern "C" fn async_nats_connection_request_async(
         let response = conn.client.request(topic_str, bytes).await;
         match response {
             Ok(msg) => {
-                let boxed_msg = Box::new(AsyncNatsMessage(msg));
+                let boxed_msg: Box<AsyncNatsMessage> = Box::new(msg.into());
                 cb.0(Box::into_raw(boxed_msg), std::ptr::null_mut(), cb.1);
             }
             Err(err) => {
@@ -63,7 +63,7 @@ pub extern "C" fn async_nats_connection_send_request_async(
         let response = conn.client.send_request(topic_str, request.build()).await;
         match response {
             Ok(msg) => {
-                let boxed_msg = Box::new(AsyncNatsMessage(msg));
+                let boxed_msg: Box<AsyncNatsMessage> = Box::new(msg.into());
                 cb.0(Box::into_raw(boxed_msg), std::ptr::null_mut(), cb.1);
             }
             Err(err) => {

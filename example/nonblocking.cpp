@@ -22,8 +22,8 @@ auto main(int, char**) -> int
     async_nats::detail::OwnedString mailbox = connection.new_mailbox();
 
     // subscribe for new events
-    // NOTE: creating subscribtion is an async operation and is going to block current thread
-    // other completion handlers like callback can be used instead.
+    // NOTE: creating subscribtion is an async operation and is going to block current thread.
+    // Other completion handlers like callback can be used instead.
     async_nats::Subscribtion sub = connection.subcribe(mailbox, boost::asio::use_future).get();
     async_nats::nonblocking::Receiver recv(std::move(sub));
 
