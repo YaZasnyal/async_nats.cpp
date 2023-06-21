@@ -24,11 +24,30 @@ public:
   }
 
   ConnectionOptions(const ConnectionOptions&) = delete;
-  ConnectionOptions(ConnectionOptions&&) = default;
+  ConnectionOptions(ConnectionOptions&& o)
+  {
+    options_ = o.options_;
+    o.options_ = nullptr;
+  }
 
   ~ConnectionOptions()
   {
-    async_nats_connection_config_delete(options_);
+    if(options_)
+      async_nats_connection_config_delete(options_);
+  }
+
+  ConnectionOptions& operator=(const ConnectionOptions&) = delete;
+  ConnectionOptions& operator=(ConnectionOptions&& o)
+  {
+    if(this == &o)
+      return *this;
+
+    if(options_)
+      async_nats_connection_config_delete(options_);
+
+    options_ = o.options_;
+    o.options_ = nullptr;
+    return *this;
   }
 
   ConnectionOptions& name(const std::string& name)
