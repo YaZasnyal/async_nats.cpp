@@ -60,6 +60,30 @@ pub struct AsyncNatsSlice {
     pub size: u64,
 }
 
+impl AsyncNatsSlice {
+    pub fn as_slice(&self) -> Option<&[u8]>
+    {
+        if self.data == std::ptr::null() {
+            return None;
+        }
+
+        Some(unsafe {
+            core::slice::from_raw_parts::<u8>(self.data, self.size as usize)
+        })
+    }
+
+    pub fn as_str(&self) -> Option<&str>
+    {
+        let Some(data) = self.as_slice() else {
+            return None;
+        };
+
+        Some(unsafe {
+            core::str::from_utf8_unchecked(data)
+        })
+    }
+}
+
 impl Default for AsyncNatsSlice {
     fn default() -> Self {
         Self {
@@ -77,25 +101,3 @@ impl LossyConvert for AsyncNatsSlice {
         .into()
     }
 }
-
-// #[repr(C)]
-// pub struct Optional<T> {
-//     has_value: bool,
-//     value: T,
-// }
-
-// impl<T: Default> Optional<T> {
-//     pub fn some(val: T) -> Self {
-//         Self {
-//             has_value: true,
-//             value: val,
-//         }
-//     }
-
-//     pub fn none() -> Self {
-//         Self {
-//             has_value: false,
-//             value: T::default(),
-//         }
-//     }
-// }

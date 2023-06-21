@@ -67,6 +67,8 @@ typedef struct AsyncNatsConnection AsyncNatsConnection;
 
 typedef struct AsyncNatsConnetionParams AsyncNatsConnetionParams;
 
+typedef struct AsyncNatsHeaderIterator AsyncNatsHeaderIterator;
+
 typedef struct AsyncNatsMessage AsyncNatsMessage;
 
 typedef struct AsyncNatsNamedReceiver AsyncNatsNamedReceiver;
@@ -218,7 +220,40 @@ struct AsyncNatsSlice async_nats_message_data(const struct AsyncNatsMessage *msg
  */
 void async_nats_message_delete(struct AsyncNatsMessage *msg);
 
+struct AsyncNatsSlice async_nats_message_description(const struct AsyncNatsMessage *msg);
+
+struct AsyncNatsHeaderIterator *async_nats_message_get_header(const struct AsyncNatsMessage *msg,
+                                                              struct AsyncNatsSlice header);
+
+bool async_nats_message_has_headers(struct AsyncNatsMessage *msg);
+
+/**
+ * header iterator must live longer that AsyncNatsMessage
+ */
+struct AsyncNatsHeaderIterator *async_nats_message_header_iterator(const struct AsyncNatsMessage *msg);
+
+void async_nats_message_header_iterator_copy(struct AsyncNatsHeaderIterator *p);
+
+void async_nats_message_header_iterator_free(struct AsyncNatsHeaderIterator *p);
+
+struct AsyncNatsSlice async_nats_message_header_iterator_key(struct AsyncNatsHeaderIterator *p);
+
+bool async_nats_message_header_iterator_next(struct AsyncNatsHeaderIterator *p);
+
+struct AsyncNatsSlice async_nats_message_header_iterator_value_at(struct AsyncNatsHeaderIterator *p,
+                                                                  uint64_t index);
+
+uint64_t async_nats_message_header_iterator_value_count(struct AsyncNatsHeaderIterator *p);
+
 struct AsyncNatsSlice async_nats_message_reply_to(const struct AsyncNatsMessage *msg);
+
+/**
+ * Optional Status of the message. Used mostly for internal handling
+ *
+ * =0 - no status code
+ * >0 - some status code
+ */
+uint16_t async_nats_message_status(const struct AsyncNatsMessage *msg);
 
 AsyncNatsOwnedString async_nats_message_to_string(const struct AsyncNatsMessage *msg);
 
