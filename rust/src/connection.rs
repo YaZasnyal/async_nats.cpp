@@ -1,5 +1,7 @@
 use crate::error::AsyncNatsConnectError;
 use crate::tokio_runtime::AsyncNatsTokioRuntime;
+use bytes::{BytesMut};
+use std::cell::RefCell;
 
 use crate::api::{
     AsyncNatsAsyncMessage, AsyncNatsAsyncString, AsyncNatsBorrowedString, AsyncNatsOwnedString,
@@ -106,17 +108,25 @@ pub extern "C" fn async_nats_connection_publish_async(
 ) {
     let conn = unsafe { &*conn };
     let topic_str = topic.lossy_convert();
+    let data_slice =
+        unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
+
+    thread_local! {
+        static BYTES: RefCell<BytesMut> = RefCell::new(bytes::BytesMut::with_capacity(65535));
+    }
+
+    // Have to copy because there is no way to know when bytes object is dropped to
+    // call the callback.
+    // Should wait for `https://github.com/tokio-rs/bytes/issues/437` and think for
+    // better solution depending on implementation
+    let bytes = BYTES.with(|f| {
+        let mut mbytes = f.borrow_mut();
+        mbytes.extend_from_slice(data_slice);
+        mbytes.split_to(data_slice.len()).freeze()
+    });
 
     conn.rt.spawn(async move {
         let cb = cb.clone();
-        let message = message;
-        let data_slice =
-            unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
-        // Have to copy because there is no way to know when bytes object is dropped to
-        // call the callback.
-        // Should wait for `https://github.com/tokio-rs/bytes/issues/437` and think for
-        // better solution depending on implementation
-        let bytes = bytes::Bytes::copy_from_slice(data_slice);
         conn.client.publish(topic_str, bytes).await.ok();
         cb.0(cb.1);
     });
