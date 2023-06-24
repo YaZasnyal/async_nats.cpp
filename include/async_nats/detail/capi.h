@@ -189,6 +189,17 @@ void async_nats_connection_publish_async(const struct AsyncNatsConnection *conn,
                                          AsyncNatsAsyncMessage message,
                                          struct AsyncNatsPublishCallback cb);
 
+/**
+ * Publish data asynchronously with reply topic.
+ *
+ * topic and message: must be valid until callback is called.
+ */
+void async_nats_connection_publish_with_reply_async(const struct AsyncNatsConnection *conn,
+                                                    struct AsyncNatsSlice topic,
+                                                    struct AsyncNatsSlice reply_to,
+                                                    AsyncNatsAsyncMessage message,
+                                                    struct AsyncNatsPublishCallback cb);
+
 void async_nats_connection_request_async(const struct AsyncNatsConnection *conn,
                                          AsyncNatsAsyncString topic,
                                          AsyncNatsAsyncMessage message,

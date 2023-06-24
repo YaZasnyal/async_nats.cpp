@@ -1,6 +1,6 @@
 use crate::error::AsyncNatsConnectError;
 use crate::tokio_runtime::AsyncNatsTokioRuntime;
-use bytes::{BytesMut};
+use bytes::BytesMut;
 use std::cell::RefCell;
 
 use crate::api::{
@@ -128,6 +128,44 @@ pub extern "C" fn async_nats_connection_publish_async(
     conn.rt.spawn(async move {
         let cb = cb.clone();
         conn.client.publish(topic_str, bytes).await.ok();
+        cb.0(cb.1);
+    });
+}
+
+/// Publish data asynchronously with reply topic.
+///
+/// topic and message: must be valid until callback is called.
+#[no_mangle]
+pub extern "C" fn async_nats_connection_publish_with_reply_async(
+    conn: *const AsyncNatsConnection,
+    topic: AsyncNatsSlice,
+    reply_to: AsyncNatsSlice,
+    message: AsyncNatsAsyncMessage,
+    cb: AsyncNatsPublishCallback,
+) {
+    let conn = unsafe { &*conn };
+    let topic_str = topic.lossy_convert();
+    let reply_to_str = reply_to.lossy_convert();
+    let data_slice =
+        unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
+
+    thread_local! {
+        static BYTES: RefCell<BytesMut> = RefCell::new(bytes::BytesMut::with_capacity(65535));
+    }
+
+    // same as async_nats_connection_publish_async
+    let bytes = BYTES.with(|f| {
+        let mut mbytes = f.borrow_mut();
+        mbytes.extend_from_slice(data_slice);
+        mbytes.split_to(data_slice.len()).freeze()
+    });
+
+    conn.rt.spawn(async move {
+        let cb = cb.clone();
+        conn.client
+            .publish_with_reply(topic_str, reply_to_str, bytes)
+            .await
+            .ok();
         cb.0(cb.1);
     });
 }

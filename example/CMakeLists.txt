@@ -24,5 +24,6 @@ add_example(cpp20_coroutine)
 add_example(nonblocking)
 add_example(requests)
 add_example(custom_allocator)
+add_example(reply_to)
 
 add_folders(Example)

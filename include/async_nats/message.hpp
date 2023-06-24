@@ -21,7 +21,7 @@ public:
   HeaderVectorView(const HeaderVectorView& o) = delete;
   HeaderVectorView(HeaderVectorView&& o)
   {
-    own_ = o.own_;
+    owns_ = o.owns_;
     it_ = o.it_;
     size_ = o.size_;
 
@@ -30,12 +30,25 @@ public:
 
   ~HeaderVectorView()
   {
-    if(own_ && it_)
+    if (owns_ && it_)
       async_nats_message_header_iterator_free(it_);
   }
 
   HeaderVectorView& operator=(const HeaderVectorView&) = delete;
-  HeaderVectorView& operator==(HeaderVectorView&&) = delete;
+  HeaderVectorView& operator=(HeaderVectorView&& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (owns_ && it_)
+      async_nats_message_header_iterator_free(it_);
+
+    owns_ = o.owns_;
+    it_ = o.it_;
+    size_ = o.size_;
+
+    return *this;
+  }
 
   size_t size() const
   {
@@ -124,14 +137,14 @@ public:
 private:
   friend class HeadersView;
   HeaderVectorView(AsyncNatsHeaderIterator* it, bool own = false)
-      : own_(own)
+      : owns_(own)
       , it_(it)
   {
-//    async_nats_message_header_iterator_copy(it_);
+    //    async_nats_message_header_iterator_copy(it_);
     size_ = async_nats_message_header_iterator_value_count(it_);
   }
 
-  bool own_ = false;
+  bool owns_ = false;
   AsyncNatsHeaderIterator* it_;
   size_t size_ = 0;
 };
@@ -212,7 +225,7 @@ public:
 
     auto res = async_nats_message_get_header(
         message_, AsyncNatsSlice {reinterpret_cast<const uint8_t*>(header.data()), header.size()});
-    if(res == nullptr)
+    if (res == nullptr)
       return std::nullopt;
 
     return HeaderVectorView(res, true);
@@ -258,6 +271,17 @@ private:
 class Message
 {
 public:
+  enum StatusCodes : uint16_t
+  {
+    None = 0,
+    IdleHeartbeat = 100,
+    Ok = 200,
+    NotFound = 404,
+    Timeout = 408,
+    NoResponders = 503,
+    RequestTerminated = 409,
+  };
+
   Message() = default;
 
   Message(AsyncNatsMessage* message)
@@ -349,6 +373,11 @@ public:
     return HeadersView(message_);
   }
 
+  /**
+   * @brief status returns optional status of the message. Used mostly for internal handling
+   *
+   * Known status fields are listed in StatusCodes enumerator
+   */
   uint16_t status() const
   {
     assert(message_ != nullptr && "Message must be checked for null before usage");

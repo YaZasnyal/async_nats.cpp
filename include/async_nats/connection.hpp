@@ -32,17 +32,17 @@ public:
 
   ~ConnectionOptions()
   {
-    if(options_)
+    if (options_)
       async_nats_connection_config_delete(options_);
   }
 
   ConnectionOptions& operator=(const ConnectionOptions&) = delete;
   ConnectionOptions& operator=(ConnectionOptions&& o)
   {
-    if(this == &o)
+    if (this == &o)
       return *this;
 
-    if(options_)
+    if (options_)
       async_nats_connection_config_delete(options_);
 
     options_ = o.options_;
@@ -223,6 +223,44 @@ public:
       async_nats_connection_publish_async(
           get_raw(),
           AsyncNatsSlice {reinterpret_cast<const uint8_t*>(topic.data()), topic.size()},
+          {reinterpret_cast<const char*>(data.data()), data.size()},
+          cb);
+    };
+
+    return boost::asio::async_initiate<CompletionToken, void()>(init, token);
+  }
+
+  /**
+   * @brief publish - publish a new message with reply address
+   * @param topic
+   * @param reply_to - a topic for the reply message
+   * @param data
+   * @param token
+   */
+  template<class CompletionToken>
+  auto publish(std::string_view topic,
+               std::string_view reply_to,
+               boost::asio::const_buffer data,
+               CompletionToken&& token)
+  {
+    auto init = [&](auto token)
+    {
+      using CH = std::decay_t<decltype(token)>;
+
+      static auto f = [](void* ctx)
+      {
+        auto c = static_cast<CH*>(ctx);
+        (*c)();
+        detail::deallocate_ctx(c);
+      };
+
+      auto ctx = detail::allocate_ctx(std::move(token));
+      ::AsyncNatsPublishCallback cb {f, ctx};
+      std::string t(topic.data(), topic.size());
+      async_nats_connection_publish_with_reply_async(
+          get_raw(),
+          AsyncNatsSlice {reinterpret_cast<const uint8_t*>(topic.data()), topic.size()},
+          AsyncNatsSlice {reinterpret_cast<const uint8_t*>(reply_to.data()), reply_to.size()},
           {reinterpret_cast<const char*>(data.data()), data.size()},
           cb);
     };
