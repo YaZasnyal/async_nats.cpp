@@ -83,6 +83,8 @@ typedef struct AsyncNatsRuntimeConfig AsyncNatsRuntimeConfig;
 
 typedef struct AsyncNatsSubscribtion AsyncNatsSubscribtion;
 
+typedef struct AsyncNatsSubscribtionCancellationToken AsyncNatsSubscribtionCancellationToken;
+
 typedef struct AsyncNatsTokioRuntime AsyncNatsTokioRuntime;
 
 typedef struct AsyncNatsTokioRuntimeConfig AsyncNatsTokioRuntimeConfig;
@@ -319,7 +321,15 @@ struct AsyncNatsRequest *async_nats_request_new(void);
 
 void async_nats_request_timeout(struct AsyncNatsRequest *req, uint64_t timeout);
 
+void async_nats_subscribtion_cancellation_token_cancel(struct AsyncNatsSubscribtionCancellationToken *c);
+
+struct AsyncNatsSubscribtionCancellationToken *async_nats_subscribtion_cancellation_token_clone(struct AsyncNatsSubscribtionCancellationToken *c);
+
+void async_nats_subscribtion_cancellation_token_delete(struct AsyncNatsSubscribtionCancellationToken *c);
+
 void async_nats_subscribtion_delete(struct AsyncNatsSubscribtion *s);
+
+struct AsyncNatsSubscribtionCancellationToken *async_nats_subscribtion_get_cancellation_token(struct AsyncNatsSubscribtion *s);
 
 void async_nats_subscribtion_receive_async(struct AsyncNatsSubscribtion *s,
                                            struct AsyncNatsReceiveCallback cb);

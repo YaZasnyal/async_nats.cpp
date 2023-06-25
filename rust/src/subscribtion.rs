@@ -5,6 +5,7 @@ use std::ffi::c_void;
 
 pub struct Subscribtion {
     sub: Subscriber,
+    sd_receiver: tokio::sync::mpsc::Receiver<()>,
 }
 
 impl Subscribtion {
@@ -14,9 +15,9 @@ impl Subscribtion {
                 msg = self.sub.next().fuse() => {
                     return msg;
                 },
-                // _ = (&mut self.shutdown_receiver).fuse() => {
-                //     self.chan.unsubscribe().await.expect("Unable to unsubscribe from channel");
-                // },
+                _ = self.sd_receiver.recv().fuse() => {
+                    self.sub.unsubscribe().await.expect("Unable to unsubscribe from channel");
+                },
             };
         }
     }
@@ -25,23 +26,28 @@ impl Subscribtion {
 pub struct AsyncNatsSubscribtion {
     pub(crate) rt: tokio::runtime::Handle,
     pub(crate) inner: Subscribtion,
+    // sd_sender: std::sync::Arc<tokio::sync::oneshot::Sender<()>>,/
+    sd_sender: tokio::sync::mpsc::Sender<()>,
 }
 
 impl AsyncNatsSubscribtion {
     pub fn new(rt: tokio::runtime::Handle, sub: Subscriber) -> Self {
+        let (tx, rx) = tokio::sync::mpsc::channel(1);
         Self {
             rt,
-            inner: Subscribtion { sub },
+            inner: Subscribtion {
+                sub,
+                sd_receiver: rx,
+            },
+            sd_sender: tx,
         }
     }
 }
 
 #[no_mangle]
 pub extern "C" fn async_nats_subscribtion_delete(s: *mut AsyncNatsSubscribtion) {
-    let mut s = unsafe {
-        Box::from_raw(s)
-    };
-    
+    let mut s = unsafe { Box::from_raw(s) };
+
     let rt = s.rt.clone();
     rt.spawn(async move {
         s.inner.sub.unsubscribe().await.ok();
@@ -73,4 +79,46 @@ pub extern "C" fn async_nats_subscribtion_receive_async(
         let boxed_msg: Box<AsyncNatsMessage> = Box::new(msg.into());
         cb.0(Box::into_raw(boxed_msg), cb.1);
     });
+}
+
+pub struct AsyncNatsSubscribtionCancellationToken {
+    sd_sender: tokio::sync::mpsc::Sender<()>,
+}
+
+#[no_mangle]
+pub extern "C" fn async_nats_subscribtion_get_cancellation_token(
+    s: *mut AsyncNatsSubscribtion,
+) -> *mut AsyncNatsSubscribtionCancellationToken {
+    let s = unsafe { &mut *s };
+    let token = Box::new(AsyncNatsSubscribtionCancellationToken {
+        sd_sender: s.sd_sender.clone(),
+    });
+    Box::into_raw(token)
+}
+
+#[no_mangle]
+pub extern "C" fn async_nats_subscribtion_cancellation_token_clone(
+    c: *mut AsyncNatsSubscribtionCancellationToken,
+) -> *mut AsyncNatsSubscribtionCancellationToken {
+    let c = unsafe { &mut *c };
+    let token = Box::new(AsyncNatsSubscribtionCancellationToken {
+        sd_sender: c.sd_sender.clone(),
+    });
+    Box::into_raw(token)
+}
+
+#[no_mangle]
+pub extern "C" fn async_nats_subscribtion_cancellation_token_delete(
+    c: *mut AsyncNatsSubscribtionCancellationToken,
+) {
+    let c = unsafe { Box::from_raw(c) };
+    drop(c);
+}
+
+#[no_mangle]
+pub extern "C" fn async_nats_subscribtion_cancellation_token_cancel(
+    c: *mut AsyncNatsSubscribtionCancellationToken,
+) {
+    let c = unsafe { &mut *c };
+    c.sd_sender.try_send(()).ok();
 }

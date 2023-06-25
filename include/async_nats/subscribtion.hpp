@@ -9,6 +9,81 @@
 namespace async_nats
 {
 /**
+ * @brief The SubscribtionCancellationToken class is used for closing subscribtions
+ *
+ * When cancel() methos is called the client closes subscribtion asynchronously in the TokioRuntime
+ * thread. Cancel returns immediately and messages that are left in the channel are not discarded
+ * and should be drained as usual.
+ *
+ * @threadsafe This class is NOT thread safe but multiple cancellation tokens can be created for
+ * a single Subscribtion.
+ */
+class SubscribtionCancellationToken
+{
+public:
+  SubscribtionCancellationToken(AsyncNatsSubscribtionCancellationToken* token)
+      : token_(token)
+  {
+  }
+
+  SubscribtionCancellationToken(const SubscribtionCancellationToken& o)
+  {
+    token_ = async_nats_subscribtion_cancellation_token_clone(o.token_);
+  }
+
+  SubscribtionCancellationToken(SubscribtionCancellationToken&& o)
+  {
+    token_ = o.token_;
+    o.token_ = nullptr;
+  }
+
+  ~SubscribtionCancellationToken()
+  {
+    if (token_)
+      async_nats_subscribtion_cancellation_token_delete(token_);
+  }
+
+  SubscribtionCancellationToken& operator=(const SubscribtionCancellationToken& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (token_)
+      async_nats_subscribtion_cancellation_token_delete(token_);
+
+    token_ = async_nats_subscribtion_cancellation_token_clone(o.token_);
+
+    return *this;
+  }
+
+  SubscribtionCancellationToken& operator=(SubscribtionCancellationToken&& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (token_)
+      async_nats_subscribtion_cancellation_token_delete(token_);
+
+    token_ = o.token_;
+    o.token_ = nullptr;
+
+    return *this;
+  }
+
+  /**
+   * @brief cancel notifies Subscribtion that it should stop receiving new messages from the
+   * server.
+   */
+  void cancel() const
+  {
+    async_nats_subscribtion_cancellation_token_cancel(token_);
+  }
+
+private:
+  AsyncNatsSubscribtionCancellationToken* token_ = nullptr;
+};
+
+/**
  * @brief The Subscribtion class
  *
  * @threadsafe This class is NOT thread safe
@@ -65,6 +140,15 @@ public:
     auto result = sub_;
     sub_ = nullptr;
     return result;
+  }
+
+  /**
+   * @brief get_cancellation_token returns special object that allows to cancel subscribtion in a
+   * thread-safe manner.
+   */
+  SubscribtionCancellationToken get_cancellation_token()
+  {
+    return SubscribtionCancellationToken(async_nats_subscribtion_get_cancellation_token(sub_));
   }
 
   template<class CompletionToken>
