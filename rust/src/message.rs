@@ -262,6 +262,13 @@ pub extern "C" fn async_nats_message_description(msg: *const AsyncNatsMessage) -
     }
 }
 
+/// Return length of the message over the wire
+#[no_mangle]
+pub extern "C" fn async_nats_message_length(msg: *const AsyncNatsMessage) -> u64 {
+    let msg = unsafe { &*msg };
+    msg.0.length as u64
+}
+
 #[no_mangle]
 pub extern "C" fn async_nats_message_to_string(
     msg: *const AsyncNatsMessage,

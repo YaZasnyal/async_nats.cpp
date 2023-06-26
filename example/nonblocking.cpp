@@ -36,9 +36,9 @@ auto main(int, char**) -> int
     sender.send(boost::asio::const_buffer(message.data(), message.size()));
 
     // receive a message
-    // this method MAY block if there is no message available right now
-    // use try_receive for read non-blocking receiving
-    auto msg = recv.receive();
+    // this method MAY block if there isn't any message available right now
+    // use try_receive() for real non-blocking experience
+    async_nats::Message msg = recv.receive();
     std::cout << msg.topic() << ": " << msg.data() << std::endl;
   } catch (const async_nats::ConnectionError& e) {
     std::cerr << "ConnectionError: type=" << e.kind() << "; text='" << e.what() << "'"

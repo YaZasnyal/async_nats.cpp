@@ -395,6 +395,14 @@ public:
     }
   }
 
+  /**
+   * @brief length returns length of the message over the wire
+   */
+  uint64_t length() const
+  {
+    return async_nats_message_length(message_);
+  }
+
   detail::OwnedString to_string() const
   {
     assert(message_ != nullptr && "Message must be checked for null before usage");

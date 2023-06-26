@@ -258,6 +258,11 @@ struct AsyncNatsSlice async_nats_message_header_iterator_value_at(struct AsyncNa
 
 uint64_t async_nats_message_header_iterator_value_count(struct AsyncNatsHeaderIterator *p);
 
+/**
+ * Return length of the message over the wire
+ */
+uint64_t async_nats_message_length(const struct AsyncNatsMessage *msg);
+
 struct AsyncNatsSlice async_nats_message_reply_to(const struct AsyncNatsMessage *msg);
 
 /**
