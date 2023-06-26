@@ -21,6 +21,8 @@ namespace async_nats
 class SubscribtionCancellationToken
 {
 public:
+  SubscribtionCancellationToken() = default;
+
   SubscribtionCancellationToken(AsyncNatsSubscribtionCancellationToken* token)
       : token_(token)
   {
@@ -76,7 +78,8 @@ public:
    */
   void cancel() const
   {
-    async_nats_subscribtion_cancellation_token_cancel(token_);
+    if(token_)
+      async_nats_subscribtion_cancellation_token_cancel(token_);
   }
 
 private:

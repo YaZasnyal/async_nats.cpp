@@ -1,32 +1,52 @@
-#cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.14)
 
-#project(async_natsTests LANGUAGES CXX)
+project(async_natsTests LANGUAGES CXX)
 
-#include(../cmake/project-is-top-level.cmake)
-#include(../cmake/folders.cmake)
+include(../cmake/project-is-top-level.cmake)
+include(../cmake/folders.cmake)
 
-## ---- Dependencies ----
+# ---- Dependencies ----
 
-#if(PROJECT_IS_TOP_LEVEL)
-#  find_package(async_nats REQUIRED)
-#  enable_testing()
-#endif()
+if(PROJECT_IS_TOP_LEVEL)
+  find_package(async_nats REQUIRED)
+  enable_testing()
+endif()
 
-#find_package(Catch2 REQUIRED)
-#include(Catch)
+find_package(GTest REQUIRED)
 
-## ---- Tests ----
+# ---- Tests ----
 
-#add_executable(async_nats_test source/async_nats_test.cpp)
-#target_link_libraries(
-#    async_nats_test PRIVATE
-#    async_nats::async_nats
-#    Catch2::Catch2WithMain
-#)
-#target_compile_features(async_nats_test PRIVATE cxx_std_17)
+add_executable(async_nats_test)
+target_link_libraries(async_nats_test
+    PRIVATE
+    async_nats::async_nats
+    GTest::gtest_main
+)
 
-#catch_discover_tests(async_nats_test)
+target_sources(async_nats_test
+  PRIVATE
+  source/nats_fixture.hpp
 
-## ---- End-of-file commands ----
+  source/nats_fixture.cpp
 
-#add_folders(Test)
+  source/mailbox.cpp
+  source/messaging.cpp
+  source/subscribtion.cpp
+  source/nonblocking.cpp
+  source/reply_to.cpp
+  source/req_rep.cpp
+)
+
+target_include_directories(async_nats_test
+  PRIVATE
+  source
+)
+
+target_compile_features(async_nats_test PRIVATE cxx_std_20)
+
+add_test(NAME async_nats COMMAND async_nats_test)
+set_tests_properties(async_nats PROPERTIES TIMEOUT 10)
+
+# ---- End-of-file commands ----
+
+add_folders(Test)

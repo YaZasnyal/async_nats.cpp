@@ -12,4 +12,4 @@ class Recipe(ConanFile):
         self.requires("boost/1.81.0")
 
     def build_requirements(self):
-        self.test_requires("catch2/3.3.1")
+        self.test_requires("gtest/cci.20210126")
