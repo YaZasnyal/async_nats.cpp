@@ -14,7 +14,7 @@ namespace async_nats::nonblocking
 class Receiver
 {
 public:
-  Receiver(Subscribtion&& sub, unsigned long long capacity = 1024)
+  Receiver(Subscribtion&& sub, unsigned long long capacity = 128)
   {
     receiver_ = async_nats_named_receiver_new(sub.release_raw(), capacity);
   }

@@ -26,7 +26,6 @@ impl Subscribtion {
 pub struct AsyncNatsSubscribtion {
     pub(crate) rt: tokio::runtime::Handle,
     pub(crate) inner: Subscribtion,
-    // sd_sender: std::sync::Arc<tokio::sync::oneshot::Sender<()>>,/
     sd_sender: tokio::sync::mpsc::Sender<()>,
 }
 

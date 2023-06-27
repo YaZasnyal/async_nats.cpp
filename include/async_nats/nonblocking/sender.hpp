@@ -21,7 +21,7 @@ class Sender
 public:
   Sender(AsyncNatsAsyncString topic, const Connection& conn)
   {
-    sender = async_nats_named_sender_new(topic, conn.get_raw(), 1024);
+    sender = async_nats_named_sender_new(topic, conn.get_raw(), 128);
   }
 
   Sender(const char* topic, const Connection& conn, std::size_t capacity)
