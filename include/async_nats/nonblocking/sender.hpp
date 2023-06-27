@@ -31,7 +31,7 @@ public:
 
   explicit Sender(const std::string& topic, const Connection& conn)
   {
-    sender = async_nats_named_sender_new(topic.c_str(), conn.get_raw(), 1024);
+    sender = async_nats_named_sender_new(topic.c_str(), conn.get_raw(), 128);
   }
 
   explicit Sender(const std::string& topic, const Connection& conn, std::size_t capacity)
