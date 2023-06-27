@@ -39,8 +39,6 @@ TEST_F(NatsFixture, reply_to)
 TEST_F(NatsFixture, reply_to_no_responders)
 {
   auto m = c.new_mailbox();
-//  auto sub = c.subcribe(m, boost::asio::use_future).get();
-
   auto reply_m = c.new_mailbox();
   auto reply_sub = c.subcribe(reply_m, boost::asio::use_future).get();
 
