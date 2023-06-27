@@ -6,7 +6,7 @@ project(
     async_nats
     VERSION 0.1.0
     DESCRIPTION "Async client for NATS"
-    HOMEPAGE_URL "https://example.com/"
+    HOMEPAGE_URL "https://github.com/YaZasnyal/async_nats.cpp/"
     LANGUAGES CXX
 )
 
@@ -22,7 +22,10 @@ FetchContent_Declare(
     GIT_TAG v0.3.5
 )
 FetchContent_MakeAvailable(Corrosion)
-corrosion_import_crate(MANIFEST_PATH ${CMAKE_CURRENT_LIST_DIR}/Cargo.toml)
+corrosion_import_crate(
+  MANIFEST_PATH ${CMAKE_CURRENT_LIST_DIR}/Cargo.toml
+  LOCKED
+)
 
 add_library(async_nats_async_nats INTERFACE)
 
@@ -89,6 +92,13 @@ target_link_libraries(async_nats_async_nats
   # TODO: linux
 )
 
+if(PROJECT_IS_TOP_LEVEL)
+  target_compile_options(async_nats_async_nats
+    INTERFACE
+    $<$<BOOL:${WIN32}>:/W4>
+    $<$<BOOL:${UNIX}>:-Wall -Wextra -Werror>
+  )
+endif()
 
 # ---- Install rules ----
 

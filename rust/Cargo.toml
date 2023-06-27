@@ -8,18 +8,20 @@ edition = "2021"
 [lib]
 # crate-type = ["cdylib"]
 crate-type = ["staticlib"]
+panic = 'abort'
 
 # [build]
 # rustflags = "-Clink-arg=-Wl,-soname=libfoo.so.0"
 
 [profile.release]
 debug = 1
+panic = 'abort'
 
 [dependencies]
-tokio = {version = "1.26.0", features = ["rt-multi-thread"]}
+tokio = {version = "1.28.2", features = ["rt-multi-thread"]}
 # async-nats = "0.29.0"
-async-nats = {git = "https://github.com/YaZasnyal/nats.rs.git", branch = "init_buffer"}
-# async-nats = { path = "../../../rust/nats.rs/async-nats" }
+# async-nats = {git = "https://github.com/YaZasnyal/nats.rs.git", branch = "init_buffer"}
+async-nats = {git = "https://github.com/nats-io/nats.rs.git", branch = "main"}
 bytes = "1.4.0"
-futures = "0.3.27"
+futures = "0.3.28"
 crossbeam = "0.8.2"
