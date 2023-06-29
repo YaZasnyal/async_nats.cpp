@@ -11,31 +11,31 @@ namespace async_nats
 /**
  * @brief The Request class is used to construct an RPC request
  */
-class Request
+class RequestBuilder
 {
 public:
-  Request()
+  RequestBuilder() noexcept
       : request_(async_nats_request_new())
   {
   }
 
-  Request(const Request&) = delete;
+  RequestBuilder(const RequestBuilder&) noexcept = delete;
 
-  Request(Request&& o)
+  RequestBuilder(RequestBuilder&& o) noexcept
   {
     request_ = o.request_;
     o.request_ = nullptr;
   }
 
-  ~Request()
+  ~RequestBuilder() noexcept
   {
     if (request_)
       async_nats_request_delete(request_);
   }
 
-  Request& operator=(const Request&) = delete;
+  RequestBuilder& operator=(const RequestBuilder&) noexcept = delete;
 
-  Request& operator=(Request&& o)
+  RequestBuilder& operator=(RequestBuilder&& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -49,13 +49,13 @@ public:
     return *this;
   }
 
-  Request& inbox(AsyncNatsBorrowedString inbox)
+  RequestBuilder& inbox(AsyncNatsBorrowedString inbox) noexcept
   {
     async_nats_request_inbox(request_, inbox);
     return *this;
   }
 
-  Request& data(boost::asio::const_buffer data)
+  RequestBuilder& data(boost::asio::const_buffer data) noexcept
   {
     async_nats_request_message(request_,
                                {reinterpret_cast<const char*>(data.data()), data.size()});
@@ -64,7 +64,7 @@ public:
 
   // @todo TODO: Headers
 
-  Request& timeout(std::chrono::steady_clock::duration duration)
+  RequestBuilder& timeout(std::chrono::steady_clock::duration duration) noexcept
   {
     async_nats_request_timeout(
         request_,
@@ -76,7 +76,7 @@ public:
   /**
    * @brief release returns control over underlying struct
    */
-  AsyncNatsRequest* release()
+  AsyncNatsRequest* release() noexcept
   {
     auto result = request_;
     request_ = nullptr;

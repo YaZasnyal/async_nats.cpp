@@ -14,29 +14,29 @@ namespace async_nats::nonblocking
 class Receiver
 {
 public:
-  Receiver(Subscribtion&& sub, unsigned long long capacity = 128)
+  Receiver(Subscribtion&& sub, unsigned long long capacity = 128) noexcept
   {
     receiver_ = async_nats_named_receiver_new(sub.release_raw(), capacity);
   }
 
-  Receiver(const Receiver& o)
+  Receiver(const Receiver& o) noexcept
   {
     receiver_ = async_nats_named_receiver_clone(o.receiver_);
   }
 
-  Receiver(Receiver&& o)
+  Receiver(Receiver&& o) noexcept
   {
     receiver_ = o.receiver_;
     o.receiver_ = nullptr;
   }
 
-  ~Receiver()
+  ~Receiver() noexcept
   {
     if (receiver_)
       async_nats_named_receiver_delete(receiver_);
   }
 
-  Receiver& operator=(const Receiver& o)
+  Receiver& operator=(const Receiver& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -48,7 +48,7 @@ public:
     return *this;
   }
 
-  Receiver& operator=(Receiver&& o)
+  Receiver& operator=(Receiver&& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -69,7 +69,7 @@ public:
    *
    * @return A new message
    */
-  Message receive() const
+  Message receive() const noexcept
   {
     return Message(async_nats_named_receiver_recv(receiver_));
   }
@@ -81,7 +81,7 @@ public:
    *
    * @return A new message if avalable
    */
-  Message try_receive() const
+  Message try_receive() const noexcept
   {
     return Message(async_nats_named_receiver_try_recv(receiver_));
   }

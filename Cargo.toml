@@ -2,3 +2,8 @@
 members = [
     "rust",
 ]
+
+[profile.release]
+panic = 'abort'
+debug = 0
+lto = true

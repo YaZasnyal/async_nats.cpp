@@ -9,7 +9,7 @@ TEST_F(NatsFixture, req_rep)
 
   std::string request = "test";
   auto req = c.request(m,
-                       std::move(async_nats::Request().data(
+                       std::move(async_nats::RequestBuilder().data(
                            boost::asio::const_buffer(request.data(), request.size()))),
                        boost::asio::use_future);
 
@@ -34,7 +34,7 @@ TEST_F(NatsFixture, req_rep_no_responder)
   auto m = c.new_mailbox();
   std::string request = "test";
   auto req = c.request(m,
-                       std::move(async_nats::Request().data(
+                       std::move(async_nats::RequestBuilder().data(
                            boost::asio::const_buffer(request.data(), request.size()))),
                        boost::asio::use_future);
 
@@ -58,7 +58,7 @@ TEST_F(NatsFixture, req_rep_timeout)
   try {
     auto req =
         c.request(m,
-                  std::move(async_nats::Request()
+                  std::move(async_nats::RequestBuilder()
                                 .data(boost::asio::const_buffer(request.data(), request.size()))
                                 .timeout(std::chrono::milliseconds(20))),
                   boost::asio::use_future)

@@ -6,16 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-# crate-type = ["cdylib"]
-crate-type = ["staticlib"]
-panic = 'abort'
+crate-type = ["cdylib", "staticlib"]
 
 # [build]
 # rustflags = "-Clink-arg=-Wl,-soname=libfoo.so.0"
-
-[profile.release]
-debug = 1
-panic = 'abort'
 
 [dependencies]
 tokio = {version = "1.28.2", features = ["rt-multi-thread"]}

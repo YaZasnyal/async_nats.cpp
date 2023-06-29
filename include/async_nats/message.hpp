@@ -282,14 +282,14 @@ public:
     RequestTerminated = 409,
   };
 
-  Message() = default;
+  Message() noexcept = default;
 
-  Message(AsyncNatsMessage* message)
+  Message(AsyncNatsMessage* message) noexcept
       : message_(message)
   {
   }
 
-  Message(const Message& o)
+  Message(const Message& o) noexcept
   {
     if (!o.message_)
       return;
@@ -297,19 +297,19 @@ public:
     message_ = async_nats_message_clone(o.message_);
   }
 
-  Message(Message&& o)
+  Message(Message&& o) noexcept
   {
     message_ = o.message_;
     o.message_ = nullptr;
   }
 
-  ~Message()
+  ~Message() noexcept
   {
     if (message_)
       async_nats_message_delete(message_);
   }
 
-  Message& operator=(const Message& o)
+  Message& operator=(const Message& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -326,7 +326,7 @@ public:
     return *this;
   }
 
-  Message& operator=(Message&& o)
+  Message& operator=(Message&& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -339,25 +339,25 @@ public:
     return *this;
   }
 
-  operator bool() const
+  operator bool() const noexcept
   {
     return message_ != nullptr;
   }
 
-  std::string_view topic() const
+  std::string_view topic() const noexcept
   {
     assert(message_ != nullptr && "Message must be checked for null before usage");
     auto slice = async_nats_message_topic(message_);
     return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
   }
 
-  std::string_view data() const
+  std::string_view data() const noexcept
   {
     auto slice = async_nats_message_data(message_);
     return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
   }
 
-  std::optional<std::string_view> reply_to() const
+  std::optional<std::string_view> reply_to() const noexcept
   {
     assert(message_ != nullptr && "Message must be checked for null before usage");
     auto slice = async_nats_message_reply_to(message_);
@@ -368,7 +368,7 @@ public:
     }
   }
 
-  HeadersView headers() const
+  HeadersView headers() const noexcept
   {
     return HeadersView(message_);
   }
@@ -378,13 +378,13 @@ public:
    *
    * Known status fields are listed in StatusCodes enumerator
    */
-  uint16_t status() const
+  uint16_t status() const noexcept
   {
     assert(message_ != nullptr && "Message must be checked for null before usage");
     return async_nats_message_status(message_);
   }
 
-  std::optional<std::string_view> description() const
+  std::optional<std::string_view> description() const noexcept
   {
     assert(message_ != nullptr && "Message must be checked for null before usage");
     auto slice = async_nats_message_description(message_);
@@ -398,12 +398,12 @@ public:
   /**
    * @brief length returns length of the message over the wire
    */
-  uint64_t length() const
+  uint64_t length() const noexcept
   {
     return async_nats_message_length(message_);
   }
 
-  detail::OwnedString to_string() const
+  detail::OwnedString to_string() const noexcept
   {
     assert(message_ != nullptr && "Message must be checked for null before usage");
     return detail::OwnedString(async_nats_message_to_string(message_));

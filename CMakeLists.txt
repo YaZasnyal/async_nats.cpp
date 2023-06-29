@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.20)
 
 include(cmake/prelude.cmake)
 
@@ -15,11 +15,14 @@ include(cmake/variables.cmake)
 
 # ---- Declare library ----
 
+option(ASYNC_NATS_SHARED "Link shared library by default" ON)
+
 include(FetchContent)
+set(CORROSION_NO_WARN_PARSE_TARGET_TRIPLE_FAILED ON)
 FetchContent_Declare(
     Corrosion
     GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
-    GIT_TAG v0.3.5
+    GIT_TAG v0.4.1
 )
 FetchContent_MakeAvailable(Corrosion)
 corrosion_import_crate(
@@ -69,6 +72,8 @@ target_compile_features(async_nats_async_nats INTERFACE cxx_std_17)
 
 find_package(Boost REQUIRED)
 
+set(SECURITY_FRAMEWORK "")
+set(CORE_FOUNDATION_FRAMEWORK "")
 if(APPLE)
     find_library(SECURITY_FRAMEWORK Security REQUIRED)
     find_library(CORE_FOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
@@ -77,7 +82,7 @@ endif()
 target_link_libraries(async_nats_async_nats
   INTERFACE
   Boost::boost
-  nats_fabric
+  $<IF:$<BOOL:${ASYNC_NATS_SHARED}>,nats_fabric-shared,nats_fabric>
 
   # windows
   $<$<BOOL:${WIN32}>:ntdll>

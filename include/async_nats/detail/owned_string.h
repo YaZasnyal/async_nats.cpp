@@ -13,28 +13,28 @@ namespace async_nats::detail
 class OwnedString
 {
 public:
-  OwnedString(char* s)
+  OwnedString(char* s) noexcept
       : s_(s)
   {
   }
 
-  OwnedString(const OwnedString&) = delete;
+  OwnedString(const OwnedString&) noexcept = delete;
 
-  OwnedString(OwnedString&& o)
+  OwnedString(OwnedString&& o) noexcept
   {
     s_ = o.s_;
     o.s_ = nullptr;
   }
 
-  ~OwnedString()
+  ~OwnedString() noexcept
   {
     if (s_)
       async_nats_owned_string_delete(s_);
   }
 
-  OwnedString& operator=(const OwnedString&) = delete;
+  OwnedString& operator=(const OwnedString&) noexcept = delete;
 
-  OwnedString& operator=(OwnedString&& o)
+  OwnedString& operator=(OwnedString&& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -47,12 +47,12 @@ public:
     return *this;
   }
 
-  operator AsyncNatsAsyncString() const
+  operator AsyncNatsAsyncString() const noexcept
   {
     return s_;
   }
 
-  operator std::string_view() const
+  operator std::string_view() const noexcept
   {
     return s_;
   }

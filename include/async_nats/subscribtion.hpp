@@ -21,31 +21,31 @@ namespace async_nats
 class SubscribtionCancellationToken
 {
 public:
-  SubscribtionCancellationToken() = default;
+  SubscribtionCancellationToken() noexcept = default;
 
-  SubscribtionCancellationToken(AsyncNatsSubscribtionCancellationToken* token)
+  SubscribtionCancellationToken(AsyncNatsSubscribtionCancellationToken* token) noexcept
       : token_(token)
   {
   }
 
-  SubscribtionCancellationToken(const SubscribtionCancellationToken& o)
+  SubscribtionCancellationToken(const SubscribtionCancellationToken& o) noexcept
   {
     token_ = async_nats_subscribtion_cancellation_token_clone(o.token_);
   }
 
-  SubscribtionCancellationToken(SubscribtionCancellationToken&& o)
+  SubscribtionCancellationToken(SubscribtionCancellationToken&& o) noexcept
   {
     token_ = o.token_;
     o.token_ = nullptr;
   }
 
-  ~SubscribtionCancellationToken()
+  ~SubscribtionCancellationToken() noexcept
   {
     if (token_)
       async_nats_subscribtion_cancellation_token_delete(token_);
   }
 
-  SubscribtionCancellationToken& operator=(const SubscribtionCancellationToken& o)
+  SubscribtionCancellationToken& operator=(const SubscribtionCancellationToken& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -58,7 +58,7 @@ public:
     return *this;
   }
 
-  SubscribtionCancellationToken& operator=(SubscribtionCancellationToken&& o)
+  SubscribtionCancellationToken& operator=(SubscribtionCancellationToken&& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -76,7 +76,7 @@ public:
    * @brief cancel notifies Subscribtion that it should stop receiving new messages from the
    * server.
    */
-  void cancel() const
+  void cancel() const noexcept
   {
     if(token_)
       async_nats_subscribtion_cancellation_token_cancel(token_);
@@ -94,28 +94,28 @@ private:
 class Subscribtion
 {
 public:
-  Subscribtion() = default;
+  Subscribtion() noexcept = default;
 
-  Subscribtion(AsyncNatsSubscribtion* sub)
+  Subscribtion(AsyncNatsSubscribtion* sub) noexcept
       : sub_(sub)
   {
   }
 
-  Subscribtion(const Subscribtion&) = delete;
-  Subscribtion(Subscribtion&& o)
+  Subscribtion(const Subscribtion&) noexcept = delete;
+  Subscribtion(Subscribtion&& o) noexcept
   {
     sub_ = o.sub_;
     o.sub_ = nullptr;
   }
 
-  ~Subscribtion()
+  ~Subscribtion() noexcept
   {
     if (sub_)
       async_nats_subscribtion_delete(sub_);
   }
 
-  Subscribtion& operator=(const Subscribtion&) = delete;
-  Subscribtion& operator=(Subscribtion&& o)
+  Subscribtion& operator=(const Subscribtion&) noexcept = delete;
+  Subscribtion& operator=(Subscribtion&& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -128,17 +128,17 @@ public:
     return *this;
   }
 
-  operator bool() const
+  operator bool() const noexcept
   {
     return sub_ != nullptr;
   }
 
-  AsyncNatsSubscribtion* get_raw()
+  AsyncNatsSubscribtion* get_raw() noexcept
   {
     return sub_;
   }
 
-  AsyncNatsSubscribtion* release_raw()
+  AsyncNatsSubscribtion* release_raw() noexcept
   {
     auto result = sub_;
     sub_ = nullptr;
@@ -149,7 +149,7 @@ public:
    * @brief get_cancellation_token returns special object that allows to cancel subscribtion in a
    * thread-safe manner.
    */
-  SubscribtionCancellationToken get_cancellation_token()
+  SubscribtionCancellationToken get_cancellation_token() noexcept
   {
     return SubscribtionCancellationToken(async_nats_subscribtion_get_cancellation_token(sub_));
   }

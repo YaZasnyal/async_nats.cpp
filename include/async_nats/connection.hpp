@@ -18,26 +18,26 @@ namespace async_nats
 class ConnectionOptions
 {
 public:
-  ConnectionOptions()
+  ConnectionOptions() noexcept
   {
     options_ = async_nats_connection_config_new();
   }
 
-  ConnectionOptions(const ConnectionOptions&) = delete;
-  ConnectionOptions(ConnectionOptions&& o)
+  ConnectionOptions(const ConnectionOptions&) noexcept = delete;
+  ConnectionOptions(ConnectionOptions&& o) noexcept
   {
     options_ = o.options_;
     o.options_ = nullptr;
   }
 
-  ~ConnectionOptions()
+  ~ConnectionOptions() noexcept
   {
     if (options_)
       async_nats_connection_config_delete(options_);
   }
 
-  ConnectionOptions& operator=(const ConnectionOptions&) = delete;
-  ConnectionOptions& operator=(ConnectionOptions&& o)
+  ConnectionOptions& operator=(const ConnectionOptions&) noexcept = delete;
+  ConnectionOptions& operator=(ConnectionOptions&& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -50,24 +50,24 @@ public:
     return *this;
   }
 
-  ConnectionOptions& name(const std::string& name)
+  ConnectionOptions& name(const std::string& name) noexcept
   {
     async_nats_connection_config_name(options_, name.c_str());
     return *this;
   }
 
-  ConnectionOptions& address(const std::string& addr)
+  ConnectionOptions& address(const std::string& addr) noexcept
   {
     async_nats_connection_config_addr(options_, addr.c_str());
     return *this;
   }
 
-  AsyncNatsConnetionParams* get_raw()
+  AsyncNatsConnetionParams* get_raw() noexcept
   {
     return options_;
   }
 
-  const AsyncNatsConnetionParams* get_raw() const
+  const AsyncNatsConnetionParams* get_raw() const noexcept
   {
     return options_;
   }
@@ -79,14 +79,14 @@ private:
 class ConnectionError : public std::runtime_error
 {
 public:
-  ConnectionError(::AsyncNatsConnectError* e)
+  ConnectionError(::AsyncNatsConnectError* e) noexcept
       : std::runtime_error(detail::OwnedString(async_nats_connection_error_describtion(e)))
       , kind_(async_nats_connection_error_kind(e))
   {
     async_nats_connection_error_delete(e);
   }
 
-  AsyncNatsConnectErrorKind kind() const
+  AsyncNatsConnectErrorKind kind() const noexcept
   {
     return kind_;
   }
@@ -98,14 +98,14 @@ private:
 class RequestError : public std::runtime_error
 {
 public:
-  RequestError(::AsyncNatsRequestError* e)
+  RequestError(::AsyncNatsRequestError* e) noexcept
       : std::runtime_error(detail::OwnedString(async_nats_request_error_describtion(e)))
       , kind_(async_nats_request_error_kind(e))
   {
     async_nats_request_error_delete(e);
   }
 
-  AsyncNatsRequestErrorKind kind() const
+  AsyncNatsRequestErrorKind kind() const noexcept
   {
     return kind_;
   }
@@ -122,32 +122,32 @@ private:
 class Connection
 {
 public:
-  Connection() = default;
+  Connection() noexcept = default;
 
-  Connection(AsyncNatsConnection* conn)
+  Connection(AsyncNatsConnection* conn) noexcept
       : conn_(conn)
   {
   }
 
-  Connection(const Connection& o)
+  Connection(const Connection& o) noexcept
   {
     conn_ = async_nats_connection_clone(o.get_raw());
   }
 
-  Connection(Connection&& o)
+  Connection(Connection&& o) noexcept
   {
     conn_ = o.conn_;
     o.conn_ = nullptr;
   }
 
-  ~Connection()
+  ~Connection() noexcept
   {
     if (conn_) {
       async_nats_connection_delete(conn_);
     }
   }
 
-  Connection& operator=(const Connection& o)
+  Connection& operator=(const Connection& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -160,7 +160,7 @@ public:
     return *this;
   }
 
-  Connection& operator=(Connection&& o)
+  Connection& operator=(Connection&& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -174,17 +174,17 @@ public:
     return *this;
   }
 
-  operator bool() const
+  operator bool() const noexcept
   {
     return conn_ != nullptr;
   }
 
-  AsyncNatsConnection* get_raw()
+  AsyncNatsConnection* get_raw() noexcept
   {
     return conn_;
   }
 
-  const AsyncNatsConnection* get_raw() const
+  const AsyncNatsConnection* get_raw() const noexcept
   {
     return conn_;
   }
@@ -192,7 +192,7 @@ public:
   /**
    * @brief new_mailbox function generates new random string that can be used for replies
    */
-  detail::OwnedString new_mailbox() const
+  detail::OwnedString new_mailbox() const noexcept
   {
     return detail::OwnedString(async_nats_connection_mailbox(conn_));
   }
@@ -323,7 +323,7 @@ public:
   }
 
   template<class CompletionToken>
-  auto request(AsyncNatsAsyncString topic, Request&& req, CompletionToken&& token)
+  auto request(AsyncNatsAsyncString topic, RequestBuilder&& req, CompletionToken&& token)
   {
     auto init = [&](auto token)
     {
