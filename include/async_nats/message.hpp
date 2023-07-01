@@ -18,8 +18,8 @@ class HeadersView;
 class HeaderVectorView
 {
 public:
-  HeaderVectorView(const HeaderVectorView& o) = delete;
-  HeaderVectorView(HeaderVectorView&& o)
+  HeaderVectorView(const HeaderVectorView& o) noexcept = delete;
+  HeaderVectorView(HeaderVectorView&& o) noexcept
   {
     owns_ = o.owns_;
     it_ = o.it_;
@@ -28,14 +28,14 @@ public:
     o.it_ = nullptr;
   }
 
-  ~HeaderVectorView()
+  ~HeaderVectorView() noexcept
   {
     if (owns_ && it_)
       async_nats_message_header_iterator_free(it_);
   }
 
-  HeaderVectorView& operator=(const HeaderVectorView&) = delete;
-  HeaderVectorView& operator=(HeaderVectorView&& o)
+  HeaderVectorView& operator=(const HeaderVectorView&) noexcept = delete;
+  HeaderVectorView& operator=(HeaderVectorView&& o) noexcept
   {
     if (this == &o)
       return *this;
@@ -50,7 +50,7 @@ public:
     return *this;
   }
 
-  size_t size() const
+  size_t size() const noexcept
   {
     return size_;
   }
@@ -67,36 +67,36 @@ public:
   class Iterator
   {
   public:
-    void operator++()
+    void operator++() noexcept
     {
       if (pos_ < size_)
         ++pos_;
     }
 
-    void operator+(size_t size)
+    void operator+(size_t size) noexcept
     {
       if (pos_ + size < size_)
         pos_ += size;
     }
 
-    void operator--()
+    void operator--() noexcept
     {
       if (pos_ != 0)
         --pos_;
     }
 
-    void operator-(size_t size)
+    void operator-(size_t size) noexcept
     {
       if (pos_ <= size)
         pos_ -= size;
     }
 
-    bool operator==(const Iterator& o) const
+    bool operator==(const Iterator& o) const noexcept
     {
       return pos_ == o.pos_;
     }
 
-    bool operator!=(const Iterator& o) const
+    bool operator!=(const Iterator& o) const noexcept
     {
       return !(pos_ == o.pos_);
     }
@@ -112,7 +112,7 @@ public:
 
   private:
     friend class HeaderVectorView;
-    Iterator(AsyncNatsHeaderIterator* it, size_t pos, size_t size)
+    Iterator(AsyncNatsHeaderIterator* it, size_t pos, size_t size) noexcept
         : it_(it)
         , pos_(pos)
         , size_(size)
@@ -124,19 +124,19 @@ public:
     size_t size_ = 0;
   };
 
-  Iterator begin() const
+  Iterator begin() const noexcept
   {
     return Iterator(it_, 0, size_);
   }
 
-  Iterator end() const
+  Iterator end() const noexcept
   {
     return Iterator(it_, size_, size_);
   }
 
 private:
   friend class HeadersView;
-  HeaderVectorView(AsyncNatsHeaderIterator* it, bool own = false)
+  HeaderVectorView(AsyncNatsHeaderIterator* it, bool own = false) noexcept
       : owns_(own)
       , it_(it)
   {
@@ -155,13 +155,13 @@ public:
   class HeaderIterator
   {
   public:
-    ~HeaderIterator()
+    ~HeaderIterator() noexcept
     {
       if (it_)
         async_nats_message_header_iterator_free(it_);
     }
 
-    std::pair<std::string_view, HeaderVectorView> operator*() const
+    std::pair<std::string_view, HeaderVectorView> operator*() const noexcept
     {
       auto h = async_nats_message_header_iterator_key(it_);
       return std::make_pair(std::string_view(reinterpret_cast<const char*>(h.data), h.size),
@@ -173,7 +173,7 @@ public:
      *
      * @note invalidates both HeaderIterator and assotiated HeaderVectorView
      */
-    void operator++()
+    void operator++() noexcept
     {
       if (!async_nats_message_header_iterator_next(it_)) {
         if (it_)
@@ -182,20 +182,20 @@ public:
       }
     }
 
-    bool operator==(HeaderIterator& o) const
+    bool operator==(HeaderIterator& o) const noexcept
     {
       return o.it_ != it_;
     }
 
-    bool operator!=(HeaderIterator& o) const
+    bool operator!=(HeaderIterator& o) const noexcept
     {
       return !(o.it_ == it_);
     }
 
   private:
     friend class HeadersView;
-    HeaderIterator() = default;
-    HeaderIterator(AsyncNatsHeaderIterator* it)
+    HeaderIterator() noexcept = default;
+    HeaderIterator(AsyncNatsHeaderIterator* it) noexcept
         : it_(it)
     {
       ++(*this);
@@ -204,7 +204,7 @@ public:
     AsyncNatsHeaderIterator* it_ = nullptr;
   };
 
-  ~HeadersView()
+  ~HeadersView() noexcept
   {
     if (message_)
       async_nats_message_delete(message_);
@@ -213,12 +213,12 @@ public:
   /**
    * @brief operator bool allows to theck if there are any headers in the message
    */
-  operator bool() const
+  operator bool() const noexcept
   {
     return async_nats_message_has_headers(message_);
   }
 
-  std::optional<HeaderVectorView> get_header(std::string_view header)
+  std::optional<HeaderVectorView> get_header(std::string_view header) noexcept
   {
     if (header.empty())
       return std::nullopt;
@@ -234,7 +234,7 @@ public:
   /**
    * @brief begin returns iterator to the beginning of the header map
    */
-  HeaderIterator begin() const
+  HeaderIterator begin() const noexcept
   {
     assert(message_ != nullptr && "Message must be checked for null before usage");
 
@@ -243,7 +243,7 @@ public:
     return HeaderIterator(async_nats_message_header_iterator(message_));
   }
 
-  HeaderIterator end() const
+  HeaderIterator end() const noexcept
   {
     return HeaderIterator();
   }
@@ -252,7 +252,7 @@ public:
 
 private:
   friend class Message;
-  HeadersView(AsyncNatsMessage* message)
+  HeadersView(AsyncNatsMessage* message) noexcept
   {
     if (message)
       message_ = async_nats_message_clone(message);
