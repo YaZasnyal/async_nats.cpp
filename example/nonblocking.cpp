@@ -19,7 +19,7 @@ auto main(int, char**) -> int
             .get();
 
     // generate random topic
-    async_nats::detail::OwnedString mailbox = connection.new_mailbox();
+    async_nats::OwnedString mailbox = connection.new_mailbox();
 
     // subscribe for new events
     // NOTE: creating subscribtion is an async operation and is going to block current thread.

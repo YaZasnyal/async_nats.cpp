@@ -23,7 +23,7 @@ class SubscribtionCancellationToken
 public:
   SubscribtionCancellationToken() noexcept = default;
 
-  SubscribtionCancellationToken(AsyncNatsSubscribtionCancellationToken* token) noexcept
+  explicit SubscribtionCancellationToken(AsyncNatsSubscribtionCancellationToken* token) noexcept
       : token_(token)
   {
   }
@@ -41,17 +41,20 @@ public:
 
   ~SubscribtionCancellationToken() noexcept
   {
-    if (token_)
+    if (token_ != nullptr) {
       async_nats_subscribtion_cancellation_token_delete(token_);
+    }
   }
 
   SubscribtionCancellationToken& operator=(const SubscribtionCancellationToken& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (token_)
+    if (token_ != nullptr) {
       async_nats_subscribtion_cancellation_token_delete(token_);
+    }
 
     token_ = async_nats_subscribtion_cancellation_token_clone(o.token_);
 
@@ -60,11 +63,13 @@ public:
 
   SubscribtionCancellationToken& operator=(SubscribtionCancellationToken&& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (token_)
+    if (token_ != nullptr) {
       async_nats_subscribtion_cancellation_token_delete(token_);
+    }
 
     token_ = o.token_;
     o.token_ = nullptr;
@@ -78,8 +83,9 @@ public:
    */
   void cancel() const noexcept
   {
-    if(token_)
+    if (token_ != nullptr) {
       async_nats_subscribtion_cancellation_token_cancel(token_);
+    }
   }
 
 private:
@@ -96,7 +102,7 @@ class Subscribtion
 public:
   Subscribtion() noexcept = default;
 
-  Subscribtion(AsyncNatsSubscribtion* sub) noexcept
+  explicit Subscribtion(AsyncNatsSubscribtion* sub) noexcept
       : sub_(sub)
   {
   }
@@ -110,37 +116,34 @@ public:
 
   ~Subscribtion() noexcept
   {
-    if (sub_)
+    if (sub_ != nullptr) {
       async_nats_subscribtion_delete(sub_);
+    }
   }
 
   Subscribtion& operator=(const Subscribtion&) noexcept = delete;
   Subscribtion& operator=(Subscribtion&& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (sub_)
+    if (sub_ != nullptr) {
       async_nats_subscribtion_delete(sub_);
+    }
     sub_ = o.sub_;
     o.sub_ = nullptr;
 
     return *this;
   }
 
-  operator bool() const noexcept
-  {
-    return sub_ != nullptr;
-  }
+  operator bool() const noexcept { return sub_ != nullptr; }
 
-  AsyncNatsSubscribtion* get_raw() noexcept
-  {
-    return sub_;
-  }
+  AsyncNatsSubscribtion* get_raw() noexcept { return sub_; }
 
   AsyncNatsSubscribtion* release_raw() noexcept
   {
-    auto result = sub_;
+    auto* result = sub_;
     sub_ = nullptr;
     return result;
   }
@@ -149,7 +152,7 @@ public:
    * @brief get_cancellation_token returns special object that allows to cancel subscribtion in a
    * thread-safe manner.
    */
-  SubscribtionCancellationToken get_cancellation_token() noexcept
+  [[nodiscard]] SubscribtionCancellationToken get_cancellation_token() noexcept
   {
     return SubscribtionCancellationToken(async_nats_subscribtion_get_cancellation_token(sub_));
   }
@@ -163,13 +166,13 @@ public:
 
       static auto f = [](AsyncNatsMessage* msg, void* ctx)
       {
-        auto c = static_cast<CH*>(ctx);
+        auto* c = static_cast<CH*>(ctx);
         (*c)(Message(msg));
         detail::deallocate_ctx(c);
       };
 
       auto ctx = detail::allocate_ctx(std::move(token));
-      ::AsyncNatsReceiveCallback cb {f, ctx};
+      const ::AsyncNatsReceiveCallback cb {f, ctx};
       async_nats_subscribtion_receive_async(get_raw(), cb);
     };
 

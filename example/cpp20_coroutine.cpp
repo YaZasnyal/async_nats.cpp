@@ -1,3 +1,4 @@
+#include <exception>
 #include <iostream>
 #include <thread>
 
@@ -20,13 +21,13 @@ boost::asio::awaitable<void> example_task(async_nats::Connection conn);
  *
  * Execute this example and observe received message.
  */
-auto main(int, char**) -> int
+auto main(int /*argc*/, char** /*argv*/) -> int
 {
-  async_nats::TokioRuntime rt;
-  boost::asio::io_context ctx;
-
   try {
-    async_nats::Connection connection =
+    const async_nats::TokioRuntime rt;
+    boost::asio::io_context ctx;
+
+    const async_nats::Connection connection =
         async_nats::connect(
             rt,
             async_nats::ConnectionOptions().name("test_app").address("nats://localhost:4222"),
@@ -39,6 +40,9 @@ auto main(int, char**) -> int
     std::cerr << "ConnectionError: type=" << e.kind() << "; text='" << e.what() << "'"
               << std::endl;
     return -1;
+  } catch (const std::exception& e) {
+    std::cerr << "Exception: text='" << e.what() << "'" << std::endl;
+    return -2;
   }
 
   return 0;
@@ -57,7 +61,8 @@ boost::asio::awaitable<void> example_task(async_nats::Connection conn)
 
   // read a message from the sub
   async_nats::Message msg = co_await sub.receive(boost::asio::use_awaitable);
-  if (!msg)
+  if (!msg) {
     co_return;
+  }
   std::cout << msg.topic() << ": " << msg.data() << std::endl;
 }

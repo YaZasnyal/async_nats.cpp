@@ -19,7 +19,7 @@ auto main(int, char**) -> int
             .get();
 
     // generate random topic
-    async_nats::detail::OwnedString mailbox = connection.new_mailbox();
+    async_nats::OwnedString mailbox = connection.new_mailbox();
 
     // subscribe for requests
     async_nats::Subscribtion sub = connection.subcribe(mailbox, boost::asio::use_future).get();

@@ -8,7 +8,7 @@
 #include <boost/system/error_code.hpp>
 
 #include <async_nats/detail/helpers.hpp>
-#include <async_nats/detail/owned_string.h>
+#include <async_nats/owned_string.h>
 #include <async_nats/errors.hpp>
 #include <async_nats/request.hpp>
 #include <async_nats/subscribtion.hpp>
@@ -19,10 +19,7 @@ namespace async_nats
 class ConnectionOptions
 {
 public:
-  ConnectionOptions() noexcept
-  {
-    options_ = async_nats_connection_config_new();
-  }
+  ConnectionOptions() noexcept { options_ = async_nats_connection_config_new(); }
 
   ConnectionOptions(const ConnectionOptions&) noexcept = delete;
   ConnectionOptions(ConnectionOptions&& o) noexcept
@@ -33,18 +30,21 @@ public:
 
   ~ConnectionOptions() noexcept
   {
-    if (options_)
+    if (options_ != nullptr) {
       async_nats_connection_config_delete(options_);
+    }
   }
 
   ConnectionOptions& operator=(const ConnectionOptions&) noexcept = delete;
   ConnectionOptions& operator=(ConnectionOptions&& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (options_)
+    if (options_ != nullptr) {
       async_nats_connection_config_delete(options_);
+    }
 
     options_ = o.options_;
     o.options_ = nullptr;
@@ -63,15 +63,9 @@ public:
     return *this;
   }
 
-  AsyncNatsConnetionParams* get_raw() noexcept
-  {
-    return options_;
-  }
+  AsyncNatsConnetionParams* get_raw() noexcept { return options_; }
 
-  const AsyncNatsConnetionParams* get_raw() const noexcept
-  {
-    return options_;
-  }
+  const AsyncNatsConnetionParams* get_raw() const noexcept { return options_; }
 
 private:
   AsyncNatsConnetionParams* options_;
@@ -85,10 +79,7 @@ public:
   {
   }
 
-  ConnectionError(const ConnectionError& o)
-  {
-    e_ = async_nats_connection_error_clone(o.e_);
-  }
+  ConnectionError(const ConnectionError& o) { e_ = async_nats_connection_error_clone(o.e_); }
 
   ConnectionError(ConnectionError&& o) noexcept
   {
@@ -97,31 +88,36 @@ public:
     o.e_ = nullptr;
   }
 
-  ~ConnectionError() noexcept
+  ~ConnectionError() noexcept override
   {
-    if (e_)
+    if (e_ != nullptr) {
       async_nats_connection_error_delete(e_);
+    }
   }
 
-  ConnectionError& operator=(const ConnectionError& o)
+  ConnectionError& operator=(const ConnectionError& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (e_)
+    if (e_ != nullptr) {
       async_nats_connection_error_delete(e_);
+    }
 
     e_ = async_nats_connection_error_clone(o.e_);
     return *this;
   }
 
-  ConnectionError& operator=(ConnectionError&& o)
+  ConnectionError& operator=(ConnectionError&& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (e_)
+    if (e_ != nullptr) {
       async_nats_connection_error_delete(e_);
+    }
 
     e_ = o.e_;
     str_ = std::move(o.str_);
@@ -129,20 +125,17 @@ public:
     return *this;
   }
 
-  AsyncNatsConnectErrorKind kind() const noexcept
-  {
-    return async_nats_connection_error_kind(e_);
-  }
+  AsyncNatsConnectErrorKind kind() const noexcept { return async_nats_connection_error_kind(e_); }
 
   // exception interface
-public:
-  const char* what() const
+  const char* what() const noexcept override
   {
-    if (str_)
+    if (str_) {
       return str_.value();
+    }
 
     assert(e_ != nullptr && "There is no exception to get text from");
-    str_ = detail::OwnedString(async_nats_connection_error_describtion(e_));
+    str_ = OwnedString(async_nats_connection_error_describtion(e_));
     return str_.value();
   }
 
@@ -153,7 +146,7 @@ private:
    *
    * this varriable is mutable to save an allocation when text is not requested by the user
    */
-  mutable std::optional<detail::OwnedString> str_;
+  mutable std::optional<OwnedString> str_;
 };
 
 class RequestError : public Exception
@@ -165,36 +158,40 @@ public:
   }
 
   RequestError(const RequestError& o)
+      : e_(async_nats_request_error_clone(o.e_))
   {
-    e_ = async_nats_request_error_clone(o.e_);
   }
 
   RequestError(RequestError&& o) noexcept
+    : e_(o.e_)
+    , str_(std::move(o.str_))
   {
-    e_ = o.e_;
-    str_ = std::move(o.str_);
     o.e_ = nullptr;
   }
 
-  RequestError& operator=(const RequestError& o)
+  RequestError& operator=(const RequestError& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (e_)
+    if (e_ != nullptr) {
       async_nats_request_error_delete(e_);
+    }
 
     e_ = async_nats_request_error_clone(o.e_);
     return *this;
   }
 
-  RequestError& operator=(RequestError&& o)
+  RequestError& operator=(RequestError&& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (e_)
+    if (e_ != nullptr) {
       async_nats_request_error_delete(e_);
+    }
 
     e_ = o.e_;
     str_ = std::move(o.str_);
@@ -202,26 +199,24 @@ public:
     return *this;
   }
 
-  ~RequestError() noexcept
+  ~RequestError() noexcept override
   {
-    if (e_)
+    if (e_ != nullptr) {
       async_nats_request_error_delete(e_);
+    }
   }
 
-  AsyncNatsRequestErrorKind kind() const noexcept
-  {
-    return async_nats_request_error_kind(e_);
-  }
+  AsyncNatsRequestErrorKind kind() const noexcept { return async_nats_request_error_kind(e_); }
 
   // exception interface
-public:
-  const char* what() const noexcept
+  const char* what() const noexcept override
   {
-    if (str_)
+    if (str_) {
       return str_.value();
+    }
 
     assert(e_ != nullptr && "There is no exception to get text from");
-    str_ = detail::OwnedString(async_nats_request_error_describtion(e_));
+    str_ = OwnedString(async_nats_request_error_describtion(e_));
     return str_.value();
   }
 
@@ -232,7 +227,7 @@ private:
    *
    * this varriable is mutable to save an allocation when text is not requested by the user
    */
-  mutable std::optional<detail::OwnedString> str_;
+  mutable std::optional<OwnedString> str_;
 };
 
 /**
@@ -250,10 +245,7 @@ public:
   {
   }
 
-  Connection(const Connection& o) noexcept
-  {
-    conn_ = async_nats_connection_clone(o.get_raw());
-  }
+  Connection(const Connection& o) noexcept { conn_ = async_nats_connection_clone(o.get_raw()); }
 
   Connection(Connection&& o) noexcept
   {
@@ -263,17 +255,18 @@ public:
 
   ~Connection() noexcept
   {
-    if (conn_) {
+    if (conn_ != nullptr) {
       async_nats_connection_delete(conn_);
     }
   }
 
   Connection& operator=(const Connection& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (conn_) {
+    if (conn_ != nullptr) {
       async_nats_connection_delete(conn_);
     }
     conn_ = async_nats_connection_clone(o.get_raw());
@@ -283,10 +276,11 @@ public:
 
   Connection& operator=(Connection&& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (conn_) {
+    if (conn_ != nullptr) {
       async_nats_connection_delete(conn_);
     }
     conn_ = o.conn_;
@@ -295,27 +289,18 @@ public:
     return *this;
   }
 
-  operator bool() const noexcept
-  {
-    return conn_ != nullptr;
-  }
+  operator bool() const noexcept { return conn_ != nullptr; }
 
-  AsyncNatsConnection* get_raw() noexcept
-  {
-    return conn_;
-  }
+  AsyncNatsConnection* get_raw() noexcept { return conn_; }
 
-  const AsyncNatsConnection* get_raw() const noexcept
-  {
-    return conn_;
-  }
+  const AsyncNatsConnection* get_raw() const noexcept { return conn_; }
 
   /**
    * @brief new_mailbox function generates new random string that can be used for replies
    */
-  detail::OwnedString new_mailbox() const noexcept
+  OwnedString new_mailbox() const noexcept
   {
-    return detail::OwnedString(async_nats_connection_mailbox(conn_));
+    return OwnedString(async_nats_connection_mailbox(conn_));
   }
 
   /**
@@ -333,14 +318,13 @@ public:
 
       static auto f = [](void* ctx)
       {
-        auto c = static_cast<CH*>(ctx);
+        auto* c = static_cast<CH*>(ctx);
         (*c)();
         detail::deallocate_ctx(c);
       };
 
       auto ctx = detail::allocate_ctx(std::move(token));
-      ::AsyncNatsPublishCallback cb {f, ctx};
-      std::string t(topic.data(), topic.size());
+      const ::AsyncNatsPublishCallback cb {f, ctx};
       async_nats_connection_publish_async(
           get_raw(),
           AsyncNatsSlice {reinterpret_cast<const uint8_t*>(topic.data()), topic.size()},
@@ -370,14 +354,13 @@ public:
 
       static auto f = [](void* ctx)
       {
-        auto c = static_cast<CH*>(ctx);
+        auto* c = static_cast<CH*>(ctx);
         (*c)();
         detail::deallocate_ctx(c);
       };
 
       auto ctx = detail::allocate_ctx(std::move(token));
-      ::AsyncNatsPublishCallback cb {f, ctx};
-      std::string t(topic.data(), topic.size());
+      const ::AsyncNatsPublishCallback cb {f, ctx};
       async_nats_connection_publish_with_reply_async(
           get_raw(),
           AsyncNatsSlice {reinterpret_cast<const uint8_t*>(topic.data()), topic.size()},
@@ -401,13 +384,13 @@ public:
       static auto f = [](AsyncNatsSubscribtion* sub, AsyncNatsOwnedString /*err*/, void* ctx)
       {
         /// @todo TODO: process error
-        auto c = static_cast<CH*>(ctx);
+        auto* c = static_cast<CH*>(ctx);
         (*c)(Subscribtion(sub));
         detail::deallocate_ctx(c);
       };
 
       auto ctx = detail::allocate_ctx(std::move(token));
-      ::AsyncNatsSubscribeCallback cb {f, ctx};
+      const ::AsyncNatsSubscribeCallback cb {f, ctx};
       async_nats_connection_subscribe_async(get_raw(), topic, cb);
     };
 
@@ -423,7 +406,7 @@ public:
 
       static auto f = [](AsyncNatsMessage* msg, AsyncNatsRequestError* e, void* ctx)
       {
-        auto c = static_cast<CH*>(ctx);
+        auto* c = static_cast<CH*>(ctx);
         if (!msg) {
           (*c)(std::make_exception_ptr(RequestError(e)), Message());
         } else {
@@ -452,7 +435,7 @@ public:
 
       static auto f = [](AsyncNatsMessage* msg, AsyncNatsRequestError* e, void* ctx)
       {
-        auto c = static_cast<CH*>(ctx);
+        auto* c = static_cast<CH*>(ctx);
         if (!msg) {
           (*c)(std::make_exception_ptr(RequestError(e)), Message());
         } else {
@@ -494,7 +477,7 @@ auto connect(const TokioRuntime& rt, const ConnectionOptions& options, Completio
 
     static auto f = [](AsyncNatsConnection* conn, AsyncNatsConnectError* e, void* ctx)
     {
-      auto c = static_cast<CH*>(ctx);
+      auto* c = static_cast<CH*>(ctx);
       if (!conn) {
         (*c)(std::make_exception_ptr(ConnectionError(e)), Connection(conn));
       } else {
@@ -505,7 +488,7 @@ auto connect(const TokioRuntime& rt, const ConnectionOptions& options, Completio
     };
 
     auto ctx = detail::allocate_ctx(std::move(token));
-    ::AsyncNatsConnectCallback cb {f, ctx};
+    const ::AsyncNatsConnectCallback cb {f, ctx};
     async_nats_connection_connect(rt.get_raw(), options.get_raw(), cb);
   };
 

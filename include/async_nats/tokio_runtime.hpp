@@ -10,13 +10,41 @@ class TokioRuntimeConfig
 {
 public:
   TokioRuntimeConfig() noexcept
+      : cfg_(async_nats_tokio_runtime_config_new())
   {
-    cfg_ = async_nats_tokio_runtime_config_new();
+  }
+
+  TokioRuntimeConfig(const TokioRuntimeConfig&) = delete;
+
+  TokioRuntimeConfig(TokioRuntimeConfig&& o) noexcept
+      : cfg_(o.cfg_)
+  {
+    o.cfg_ = nullptr;
   }
 
   ~TokioRuntimeConfig() noexcept
   {
-    async_nats_tokio_runtime_config_delete(cfg_);
+    if (cfg_ != nullptr) {
+      async_nats_tokio_runtime_config_delete(cfg_);
+    }
+  }
+
+  TokioRuntimeConfig& operator=(const TokioRuntimeConfig&) = delete;
+
+  TokioRuntimeConfig& operator=(TokioRuntimeConfig&& o) noexcept
+  {
+    if (this == &o) {
+      return *this;
+    }
+
+    if (cfg_ != nullptr) {
+      async_nats_tokio_runtime_config_delete(cfg_);
+    }
+
+    cfg_ = o.cfg_;
+    o.cfg_ = nullptr;
+
+    return *this;
   }
 
   TokioRuntimeConfig& thread_name(const std::string& tname) noexcept
@@ -31,15 +59,9 @@ public:
     return *this;
   }
 
-  AsyncNatsTokioRuntimeConfig* get_raw() noexcept
-  {
-    return cfg_;
-  }
+  AsyncNatsTokioRuntimeConfig* get_raw() noexcept { return cfg_; }
 
-  const AsyncNatsTokioRuntimeConfig* get_raw() const noexcept
-  {
-    return cfg_;
-  }
+  const AsyncNatsTokioRuntimeConfig* get_raw() const noexcept { return cfg_; }
 
 private:
   AsyncNatsTokioRuntimeConfig* cfg_;
@@ -48,7 +70,7 @@ private:
 class TokioRuntime
 {
 public:
-  TokioRuntime(const TokioRuntimeConfig& cfg = TokioRuntimeConfig()) noexcept
+  explicit TokioRuntime(const TokioRuntimeConfig& cfg = TokioRuntimeConfig()) noexcept
   {
     rt_ = async_nats_tokio_runtime_new(cfg.get_raw());
   }
@@ -56,42 +78,39 @@ public:
   TokioRuntime(const TokioRuntime&) noexcept = delete;
 
   TokioRuntime(TokioRuntime&& o) noexcept
+      : rt_(o.rt_)
   {
-    rt_ = o.rt_;
     o.rt_ = nullptr;
   }
 
   ~TokioRuntime() noexcept
   {
-    if (rt_)
+    if (rt_ != nullptr) {
       async_nats_tokio_runtime_delete(rt_);
+    }
   }
 
   TokioRuntime& operator=(const TokioRuntime&) noexcept = delete;
 
-  TokioRuntime& operator=(TokioRuntime&& o) noexcept
+  TokioRuntime& operator=(TokioRuntime&& other) noexcept
   {
-    if (this == &o)
+    if (this == &other) {
       return *this;
+    }
 
-    if (rt_)
+    if (rt_ != nullptr) {
       async_nats_tokio_runtime_delete(rt_);
+    }
 
-    rt_ = o.rt_;
-    o.rt_ = nullptr;
+    rt_ = other.rt_;
+    other.rt_ = nullptr;
 
     return *this;
   }
 
-  operator bool() const noexcept
-  {
-    return rt_ != nullptr;
-  }
+  operator bool() const noexcept { return rt_ != nullptr; }
 
-  const AsyncNatsTokioRuntime* get_raw() const noexcept
-  {
-    return rt_;
-  }
+  const AsyncNatsTokioRuntime* get_raw() const noexcept { return rt_; }
 
 private:
   AsyncNatsTokioRuntime* rt_;

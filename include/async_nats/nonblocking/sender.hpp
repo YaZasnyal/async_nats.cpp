@@ -19,78 +19,79 @@ namespace async_nats::nonblocking
 class Sender
 {
 public:
+  static constexpr std::size_t default_capacity = 128;
+
   Sender(AsyncNatsAsyncString topic, const Connection& conn) noexcept
+      : sender_(async_nats_named_sender_new(topic, conn.get_raw(), default_capacity))
   {
-    sender = async_nats_named_sender_new(topic, conn.get_raw(), 128);
   }
 
   Sender(const char* topic, const Connection& conn, std::size_t capacity) noexcept
+      : sender_(async_nats_named_sender_new(topic, conn.get_raw(), capacity))
   {
-    sender = async_nats_named_sender_new(topic, conn.get_raw(), capacity);
   }
 
   explicit Sender(const std::string& topic, const Connection& conn) noexcept
+      : sender_(async_nats_named_sender_new(topic.c_str(), conn.get_raw(), default_capacity))
   {
-    sender = async_nats_named_sender_new(topic.c_str(), conn.get_raw(), 128);
   }
 
   explicit Sender(const std::string& topic, const Connection& conn, std::size_t capacity) noexcept
+      : sender_(async_nats_named_sender_new(topic.c_str(), conn.get_raw(), capacity))
   {
-    sender = async_nats_named_sender_new(topic.c_str(), conn.get_raw(), capacity);
   }
 
   Sender(const Sender& o) noexcept
+      : sender_(async_nats_named_sender_clone(o.get_raw()))
   {
-    sender = async_nats_named_sender_clone(o.get_raw());
   }
 
   Sender(Sender&& o) noexcept
+      : sender_(o.sender_)
   {
-    sender = o.sender;
-    o.sender = nullptr;
+    o.sender_ = nullptr;
   }
 
   ~Sender() noexcept
   {
-    if (sender)
-      async_nats_named_sender_delete(sender);
+    if (sender_ != nullptr) {
+      async_nats_named_sender_delete(sender_);
+    }
   }
 
   Sender& operator=(const Sender& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (sender)
-      async_nats_named_sender_delete(sender);
+    if (sender_ != nullptr) {
+      async_nats_named_sender_delete(sender_);
+    }
 
-    sender = async_nats_named_sender_clone(o.get_raw());
+    sender_ = async_nats_named_sender_clone(o.get_raw());
     return *this;
   }
 
   Sender& operator=(Sender&& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (sender)
-      async_nats_named_sender_delete(sender);
+    if (sender_ != nullptr) {
+      async_nats_named_sender_delete(sender_);
+    }
 
-    sender = o.sender;
-    o.sender = nullptr;
+    sender_ = o.sender_;
+    o.sender_ = nullptr;
 
     return *this;
   }
 
-  AsyncNatsNamedSender* get_raw() noexcept
-  {
-    return sender;
-  }
+  AsyncNatsNamedSender* get_raw() noexcept { return sender_; }
 
-  const AsyncNatsNamedSender* get_raw() const noexcept
-  {
-    return sender;
-  }
+  const AsyncNatsNamedSender* get_raw() const noexcept { return sender_; }
 
   /**
    * @brief try_send - pushes data to the send queue if there is space available
@@ -99,13 +100,13 @@ public:
   bool try_send(boost::asio::const_buffer data) const noexcept
   {
     return async_nats_named_sender_try_send(
-        sender, nullptr, {reinterpret_cast<const char*>(data.data()), data.size()});
+        sender_, nullptr, {reinterpret_cast<const char*>(data.data()), data.size()});
   }
 
   bool try_send(const char* topic, boost::asio::const_buffer data) const noexcept
   {
     return async_nats_named_sender_try_send(
-        sender, topic, {reinterpret_cast<const char*>(data.data()), data.size()});
+        sender_, topic, {reinterpret_cast<const char*>(data.data()), data.size()});
   }
 
   /**
@@ -117,17 +118,17 @@ public:
   void send(boost::asio::const_buffer data) const noexcept
   {
     async_nats_named_sender_send(
-        sender, nullptr, {reinterpret_cast<const char*>(data.data()), data.size()});
+        sender_, nullptr, {reinterpret_cast<const char*>(data.data()), data.size()});
   }
 
   void send(const char* topic, boost::asio::const_buffer data) const noexcept
   {
     async_nats_named_sender_send(
-        sender, topic, {reinterpret_cast<const char*>(data.data()), data.size()});
+        sender_, topic, {reinterpret_cast<const char*>(data.data()), data.size()});
   }
 
 private:
-  AsyncNatsNamedSender* sender;
+  AsyncNatsNamedSender* sender_;
 };
 
-}  // namespace async_nats
+}  // namespace async_nats::nonblocking

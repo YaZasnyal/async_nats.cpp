@@ -2,9 +2,9 @@
 
 #include <string_view>
 
-#include "capi.h"
+#include <async_nats/detail/capi.h>
 
-namespace async_nats::detail
+namespace async_nats
 {
 /**
  * @brief The OwnedString class is used to store C-strings returned from the rust part and free
@@ -28,37 +28,34 @@ public:
 
   ~OwnedString() noexcept
   {
-    if (s_)
+    if (s_ != nullptr) {
       async_nats_owned_string_delete(s_);
+    }
   }
 
   OwnedString& operator=(const OwnedString&) noexcept = delete;
 
   OwnedString& operator=(OwnedString&& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (s_)
+    if (s_ != nullptr) {
       async_nats_owned_string_delete(s_);
+    }
 
     s_ = o.s_;
     o.s_ = nullptr;
     return *this;
   }
 
-  operator AsyncNatsAsyncString() const noexcept
-  {
-    return s_;
-  }
+  operator AsyncNatsAsyncString() const noexcept { return s_; }
 
-  operator std::string_view() const noexcept
-  {
-    return s_;
-  }
+  operator std::string_view() const noexcept { return s_; }
 
 private:
   char* s_ = nullptr;
 };
 
-}  // namespace async_nats::detail
+}  // namespace async_nats

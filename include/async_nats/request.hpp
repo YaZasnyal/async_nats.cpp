@@ -29,19 +29,22 @@ public:
 
   ~RequestBuilder() noexcept
   {
-    if (request_)
+    if (request_ != nullptr) {
       async_nats_request_delete(request_);
+    }
   }
 
   RequestBuilder& operator=(const RequestBuilder&) noexcept = delete;
 
   RequestBuilder& operator=(RequestBuilder&& o) noexcept
   {
-    if (this == &o)
+    if (this == &o) {
       return *this;
+    }
 
-    if (request_)
+    if (request_ != nullptr) {
       async_nats_request_delete(request_);
+    }
 
     request_ = o.request_;
     o.request_ = nullptr;
@@ -78,7 +81,7 @@ public:
    */
   AsyncNatsRequest* release() noexcept
   {
-    auto result = request_;
+    auto* result = request_;
     request_ = nullptr;
     return result;
   }
