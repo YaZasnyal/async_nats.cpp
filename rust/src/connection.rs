@@ -51,7 +51,7 @@ pub extern "C" fn async_nats_connection_connect(
         let conn = match conn {
             Ok(conn) => conn,
             Err(err) => {
-                let err = Box::new(AsyncNatsConnectError(err));
+                let err = Box::new(AsyncNatsConnectError::new(err));
                 cb.0(std::ptr::null_mut(), Box::leak(err), cb.1);
                 return;
             }

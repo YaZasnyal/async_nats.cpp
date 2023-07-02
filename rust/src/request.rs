@@ -40,9 +40,9 @@ pub extern "C" fn async_nats_connection_request_async(
                 cb.0(Box::into_raw(boxed_msg), std::ptr::null_mut(), cb.1);
             }
             Err(err) => {
-                let err = Box::new(AsyncNatsRequestError(err));
+                let err = Box::new(AsyncNatsRequestError::new(err));
                 cb.0(std::ptr::null_mut(), Box::leak(err), cb.1)
-            },
+            }
         }
     });
 }
@@ -67,9 +67,9 @@ pub extern "C" fn async_nats_connection_send_request_async(
                 cb.0(Box::into_raw(boxed_msg), std::ptr::null_mut(), cb.1);
             }
             Err(err) => {
-                let err = Box::new(AsyncNatsRequestError(err));
+                let err = Box::new(AsyncNatsRequestError::new(err));
                 cb.0(std::ptr::null_mut(), Box::leak(err), cb.1)
-            },
+            }
         }
     });
 }

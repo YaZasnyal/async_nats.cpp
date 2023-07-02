@@ -173,6 +173,8 @@ void async_nats_connection_connect(const struct AsyncNatsTokioRuntime *rt,
 
 void async_nats_connection_delete(struct AsyncNatsConnection *conn);
 
+struct AsyncNatsConnectError *async_nats_connection_error_clone(struct AsyncNatsConnectError *err);
+
 void async_nats_connection_error_delete(struct AsyncNatsConnectError *err);
 
 AsyncNatsOwnedString async_nats_connection_error_describtion(const struct AsyncNatsConnectError *err);
@@ -311,6 +313,8 @@ bool async_nats_named_sender_try_send(const struct AsyncNatsNamedSender *sender,
 void async_nats_owned_string_delete(AsyncNatsOwnedString s);
 
 void async_nats_request_delete(struct AsyncNatsRequest *req);
+
+struct AsyncNatsRequestError *async_nats_request_error_clone(struct AsyncNatsRequestError *err);
 
 void async_nats_request_error_delete(struct AsyncNatsRequestError *err);
 

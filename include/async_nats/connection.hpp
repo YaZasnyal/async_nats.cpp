@@ -9,6 +9,7 @@
 
 #include <async_nats/detail/helpers.hpp>
 #include <async_nats/detail/owned_string.h>
+#include <async_nats/errors.hpp>
 #include <async_nats/request.hpp>
 #include <async_nats/subscribtion.hpp>
 #include <async_nats/tokio_runtime.hpp>
@@ -76,42 +77,162 @@ private:
   AsyncNatsConnetionParams* options_;
 };
 
-class ConnectionError : public std::runtime_error
+class ConnectionError : public Exception
 {
 public:
   ConnectionError(::AsyncNatsConnectError* e) noexcept
-      : std::runtime_error(detail::OwnedString(async_nats_connection_error_describtion(e)))
-      , kind_(async_nats_connection_error_kind(e))
+      : e_(e)
   {
-    async_nats_connection_error_delete(e);
+  }
+
+  ConnectionError(const ConnectionError& o)
+  {
+    e_ = async_nats_connection_error_clone(o.e_);
+  }
+
+  ConnectionError(ConnectionError&& o) noexcept
+  {
+    e_ = o.e_;
+    str_ = std::move(o.str_);
+    o.e_ = nullptr;
+  }
+
+  ~ConnectionError() noexcept
+  {
+    if (e_)
+      async_nats_connection_error_delete(e_);
+  }
+
+  ConnectionError& operator=(const ConnectionError& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (e_)
+      async_nats_connection_error_delete(e_);
+
+    e_ = async_nats_connection_error_clone(o.e_);
+    return *this;
+  }
+
+  ConnectionError& operator=(ConnectionError&& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (e_)
+      async_nats_connection_error_delete(e_);
+
+    e_ = o.e_;
+    str_ = std::move(o.str_);
+    o.e_ = nullptr;
+    return *this;
   }
 
   AsyncNatsConnectErrorKind kind() const noexcept
   {
-    return kind_;
+    return async_nats_connection_error_kind(e_);
+  }
+
+  // exception interface
+public:
+  const char* what() const
+  {
+    if (str_)
+      return str_.value();
+
+    assert(e_ != nullptr && "There is no exception to get text from");
+    str_ = detail::OwnedString(async_nats_connection_error_describtion(e_));
+    return str_.value();
   }
 
 private:
-  AsyncNatsConnectErrorKind kind_;
+  ::AsyncNatsConnectError* e_;
+  /**
+   * @brief str_ contains an arror text
+   *
+   * this varriable is mutable to save an allocation when text is not requested by the user
+   */
+  mutable std::optional<detail::OwnedString> str_;
 };
 
-class RequestError : public std::runtime_error
+class RequestError : public Exception
 {
 public:
   RequestError(::AsyncNatsRequestError* e) noexcept
-      : std::runtime_error(detail::OwnedString(async_nats_request_error_describtion(e)))
-      , kind_(async_nats_request_error_kind(e))
+      : e_(e)
   {
-    async_nats_request_error_delete(e);
+  }
+
+  RequestError(const RequestError& o)
+  {
+    e_ = async_nats_request_error_clone(o.e_);
+  }
+
+  RequestError(RequestError&& o) noexcept
+  {
+    e_ = o.e_;
+    str_ = std::move(o.str_);
+    o.e_ = nullptr;
+  }
+
+  RequestError& operator=(const RequestError& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (e_)
+      async_nats_request_error_delete(e_);
+
+    e_ = async_nats_request_error_clone(o.e_);
+    return *this;
+  }
+
+  RequestError& operator=(RequestError&& o)
+  {
+    if (this == &o)
+      return *this;
+
+    if (e_)
+      async_nats_request_error_delete(e_);
+
+    e_ = o.e_;
+    str_ = std::move(o.str_);
+    o.e_ = nullptr;
+    return *this;
+  }
+
+  ~RequestError() noexcept
+  {
+    if (e_)
+      async_nats_request_error_delete(e_);
   }
 
   AsyncNatsRequestErrorKind kind() const noexcept
   {
-    return kind_;
+    return async_nats_request_error_kind(e_);
+  }
+
+  // exception interface
+public:
+  const char* what() const noexcept
+  {
+    if (str_)
+      return str_.value();
+
+    assert(e_ != nullptr && "There is no exception to get text from");
+    str_ = detail::OwnedString(async_nats_request_error_describtion(e_));
+    return str_.value();
   }
 
 private:
-  AsyncNatsRequestErrorKind kind_;
+  ::AsyncNatsRequestError* e_;
+  /**
+   * @brief str_ contains an arror text
+   *
+   * this varriable is mutable to save an allocation when text is not requested by the user
+   */
+  mutable std::optional<detail::OwnedString> str_;
 };
 
 /**
