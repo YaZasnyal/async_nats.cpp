@@ -53,7 +53,10 @@ public:
     return *this;
   }
 
-  size_t size() const noexcept { return size_; }
+  size_t size() const noexcept
+  {
+    return size_;
+  }
 
   std::string_view at(size_t index) const
   {
@@ -62,7 +65,7 @@ public:
     }
 
     auto slice = async_nats_message_header_iterator_value_at(it_, index);
-    return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
+    return std::string_view(static_cast<const char*>(slice.data), slice.size);
   }
 
   class Iterator
@@ -96,9 +99,15 @@ public:
       }
     }
 
-    bool operator==(const Iterator& o) const noexcept { return pos_ == o.pos_; }
+    bool operator==(const Iterator& o) const noexcept
+    {
+      return pos_ == o.pos_;
+    }
 
-    bool operator!=(const Iterator& o) const noexcept { return !(pos_ == o.pos_); }
+    bool operator!=(const Iterator& o) const noexcept
+    {
+      return !(pos_ == o.pos_);
+    }
 
     std::string_view operator*() const
     {
@@ -107,7 +116,7 @@ public:
       }
 
       auto slice = async_nats_message_header_iterator_value_at(it_, pos_);
-      return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
+      return std::string_view(static_cast<const char*>(slice.data), slice.size);
     }
 
   private:
@@ -124,9 +133,15 @@ public:
     size_t size_ = 0;
   };
 
-  Iterator begin() const noexcept { return Iterator(it_, 0, size_); }
+  Iterator begin() const noexcept
+  {
+    return Iterator(it_, 0, size_);
+  }
 
-  Iterator end() const noexcept { return Iterator(it_, size_, size_); }
+  Iterator end() const noexcept
+  {
+    return Iterator(it_, size_, size_);
+  }
 
 private:
   friend class HeadersView;
@@ -184,7 +199,7 @@ public:
     std::pair<std::string_view, HeaderVectorView> operator*() const noexcept
     {
       auto h = async_nats_message_header_iterator_key(it_);
-      return std::make_pair(std::string_view(reinterpret_cast<const char*>(h.data), h.size),
+      return std::make_pair(std::string_view(static_cast<const char*>(h.data), h.size),
                             HeaderVectorView(it_));
     }
 
@@ -203,9 +218,15 @@ public:
       }
     }
 
-    bool operator==(HeaderIterator& o) const noexcept { return o.it_ != it_; }
+    bool operator==(HeaderIterator& o) const noexcept
+    {
+      return o.it_ != it_;
+    }
 
-    bool operator!=(HeaderIterator& o) const noexcept { return !(o.it_ == it_); }
+    bool operator!=(HeaderIterator& o) const noexcept
+    {
+      return !(o.it_ == it_);
+    }
 
   private:
     friend class HeadersView;
@@ -255,7 +276,10 @@ public:
   /**
    * @brief operator bool allows to theck if there are any headers in the message
    */
-  operator bool() const noexcept { return async_nats_message_has_headers(message_); }
+  operator bool() const noexcept
+  {
+    return async_nats_message_has_headers(message_);
+  }
 
   std::optional<HeaderVectorView> get_header(std::string_view header) noexcept
   {
@@ -263,8 +287,8 @@ public:
       return std::nullopt;
     }
 
-    auto* res = async_nats_message_get_header(
-        message_, AsyncNatsSlice {reinterpret_cast<const uint8_t*>(header.data()), header.size()});
+    auto* res =
+        async_nats_message_get_header(message_, AsyncNatsSlice {header.data(), header.size()});
     if (res == nullptr) {
       return std::nullopt;
     }
@@ -285,7 +309,10 @@ public:
     return HeaderIterator(async_nats_message_header_iterator(message_));
   }
 
-  static HeaderIterator end() noexcept { return HeaderIterator(); }
+  static HeaderIterator end() noexcept
+  {
+    return HeaderIterator();
+  }
 
   // end
 
@@ -385,19 +412,22 @@ public:
     return *this;
   }
 
-  operator bool() const noexcept { return message_ != nullptr; }
+  operator bool() const noexcept
+  {
+    return message_ != nullptr;
+  }
 
   std::string_view topic() const noexcept
   {
     assert(message_ != nullptr && "Message must be checked for null before usage");
     auto slice = async_nats_message_topic(message_);
-    return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
+    return std::string_view(static_cast<const char*>(slice.data), slice.size);
   }
 
   std::string_view data() const noexcept
   {
     auto slice = async_nats_message_data(message_);
-    return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
+    return std::string_view(static_cast<const char*>(slice.data), slice.size);
   }
 
   std::optional<std::string_view> reply_to() const noexcept
@@ -405,13 +435,16 @@ public:
     assert(message_ != nullptr && "Message must be checked for null before usage");
     auto slice = async_nats_message_reply_to(message_);
     if (slice.data != nullptr) {
-      return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
+      return std::string_view(static_cast<const char*>(slice.data), slice.size);
     }
 
     return std::nullopt;
   }
 
-  HeadersView headers() const noexcept { return HeadersView(message_); }
+  HeadersView headers() const noexcept
+  {
+    return HeadersView(message_);
+  }
 
   /**
    * @brief status returns optional status of the message. Used mostly for internal handling
@@ -429,7 +462,7 @@ public:
     assert(message_ != nullptr && "Message must be checked for null before usage");
     auto slice = async_nats_message_description(message_);
     if (slice.data != nullptr) {
-      return std::string_view(reinterpret_cast<const char*>(slice.data), slice.size);
+      return std::string_view(static_cast<const char*>(slice.data), slice.size);
     }
     return std::nullopt;
   }
@@ -437,7 +470,10 @@ public:
   /**
    * @brief length returns length of the message over the wire
    */
-  uint64_t length() const noexcept { return async_nats_message_length(message_); }
+  uint64_t length() const noexcept
+  {
+    return async_nats_message_length(message_);
+  }
 
   OwnedString to_string() const noexcept
   {

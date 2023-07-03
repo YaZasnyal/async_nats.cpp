@@ -137,9 +137,15 @@ public:
     return *this;
   }
 
-  operator bool() const noexcept { return sub_ != nullptr; }
+  operator bool() const noexcept
+  {
+    return sub_ != nullptr;
+  }
 
-  AsyncNatsSubscribtion* get_raw() noexcept { return sub_; }
+  AsyncNatsSubscribtion* get_raw() noexcept
+  {
+    return sub_;
+  }
 
   AsyncNatsSubscribtion* release_raw() noexcept
   {

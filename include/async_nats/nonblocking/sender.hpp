@@ -10,7 +10,6 @@
 
 namespace async_nats::nonblocking
 {
-
 /**
  * @brief The Sender class
  *
@@ -89,9 +88,15 @@ public:
     return *this;
   }
 
-  AsyncNatsNamedSender* get_raw() noexcept { return sender_; }
+  AsyncNatsNamedSender* get_raw() noexcept
+  {
+    return sender_;
+  }
 
-  const AsyncNatsNamedSender* get_raw() const noexcept { return sender_; }
+  const AsyncNatsNamedSender* get_raw() const noexcept
+  {
+    return sender_;
+  }
 
   /**
    * @brief try_send - pushes data to the send queue if there is space available
@@ -99,14 +104,12 @@ public:
    */
   bool try_send(boost::asio::const_buffer data) const noexcept
   {
-    return async_nats_named_sender_try_send(
-        sender_, nullptr, {reinterpret_cast<const char*>(data.data()), data.size()});
+    return async_nats_named_sender_try_send(sender_, nullptr, {data.data(), data.size()});
   }
 
   bool try_send(const char* topic, boost::asio::const_buffer data) const noexcept
   {
-    return async_nats_named_sender_try_send(
-        sender_, topic, {reinterpret_cast<const char*>(data.data()), data.size()});
+    return async_nats_named_sender_try_send(sender_, topic, {data.data(), data.size()});
   }
 
   /**
@@ -117,14 +120,12 @@ public:
    */
   void send(boost::asio::const_buffer data) const noexcept
   {
-    async_nats_named_sender_send(
-        sender_, nullptr, {reinterpret_cast<const char*>(data.data()), data.size()});
+    async_nats_named_sender_send(sender_, nullptr, {data.data(), data.size()});
   }
 
   void send(const char* topic, boost::asio::const_buffer data) const noexcept
   {
-    async_nats_named_sender_send(
-        sender_, topic, {reinterpret_cast<const char*>(data.data()), data.size()});
+    async_nats_named_sender_send(sender_, topic, {data.data(), data.size()});
   }
 
 private:

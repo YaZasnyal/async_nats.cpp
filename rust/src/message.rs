@@ -2,6 +2,7 @@ use std::{
     str::FromStr,
     sync::atomic::{AtomicU64, Ordering},
 };
+use std::ffi::c_void;
 
 pub struct AsyncNatsMessage(pub async_nats::Message, pub(crate) AtomicU64);
 
@@ -43,7 +44,7 @@ pub extern "C" fn async_nats_message_clone(msg: *mut AsyncNatsMessage) -> *mut A
 pub extern "C" fn async_nats_message_topic(msg: *const AsyncNatsMessage) -> AsyncNatsSlice {
     let msg = unsafe { &*msg };
     AsyncNatsSlice {
-        data: msg.0.subject.as_ptr(),
+        data: msg.0.subject.as_ptr() as *const c_void,
         size: msg.0.subject.len() as u64,
     }
 }
@@ -54,7 +55,7 @@ pub extern "C" fn async_nats_message_topic(msg: *const AsyncNatsMessage) -> Asyn
 pub extern "C" fn async_nats_message_data(msg: *const AsyncNatsMessage) -> AsyncNatsSlice {
     let msg = unsafe { &*msg };
     AsyncNatsSlice {
-        data: msg.0.payload.as_ptr(),
+        data: msg.0.payload.as_ptr() as *const c_void,
         size: msg.0.payload.len() as u64,
     }
 }
@@ -68,7 +69,7 @@ pub extern "C" fn async_nats_message_reply_to(msg: *const AsyncNatsMessage) -> A
     };
 
     AsyncNatsSlice {
-        data: reply.as_ptr(),
+        data: reply.as_ptr() as *const c_void,
         size: reply.len() as u64,
     }
 }
@@ -158,7 +159,7 @@ pub extern "C" fn async_nats_message_header_iterator_key(
     let (k, _) = ctx.val.expect("Trying to derev an empty header");
     let str: &str = k.as_ref();
     AsyncNatsSlice {
-        data: str.as_ptr(),
+        data: str.as_ptr() as *const c_void,
         size: str.len() as u64,
     }
 }
@@ -216,7 +217,7 @@ pub extern "C" fn async_nats_message_header_iterator_value_at(
         .expect("Index is out of range. Must be checked on C++ side");
 
     AsyncNatsSlice {
-        data: str.as_ptr(),
+        data: str.as_ptr() as *const c_void,
         size: str.len() as u64,
     }
 }
@@ -257,7 +258,7 @@ pub extern "C" fn async_nats_message_description(msg: *const AsyncNatsMessage) -
     };
 
     AsyncNatsSlice {
-        data: description.as_ptr(),
+        data: description.as_ptr() as *const c_void,
         size: description.len() as u64,
     }
 }

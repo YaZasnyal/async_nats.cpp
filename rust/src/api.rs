@@ -1,5 +1,5 @@
 /// This file contains common api structs
-use std::ffi::{c_char, c_ulonglong, CStr};
+use std::ffi::{c_char, c_ulonglong, c_void, CStr};
 
 pub trait LossyConvert {
     fn lossy_convert(&self) -> String;
@@ -46,7 +46,7 @@ pub extern "C" fn async_nats_owned_string_delete(s: AsyncNatsOwnedString) {
 /// specific function call.
 #[repr(C)]
 #[derive(Debug)]
-pub struct AsyncNatsBorrowedMessage(pub *const c_char, pub c_ulonglong);
+pub struct AsyncNatsBorrowedMessage(pub *const c_void, pub c_ulonglong);
 
 /// AsyncMessage represents a byte stream with a lifetime limited to a
 /// specific async call and should be valid until a callback is called
@@ -56,31 +56,27 @@ unsafe impl Send for AsyncNatsAsyncMessage {}
 #[repr(C)]
 #[derive(Debug)]
 pub struct AsyncNatsSlice {
-    pub data: *const u8,
+    pub data: *const c_void,
     pub size: u64,
 }
 
 impl AsyncNatsSlice {
-    pub fn as_slice(&self) -> Option<&[u8]>
-    {
+    pub fn as_slice(&self) -> Option<&[u8]> {
         if self.data == std::ptr::null() {
             return None;
         }
 
         Some(unsafe {
-            core::slice::from_raw_parts::<u8>(self.data, self.size as usize)
+            core::slice::from_raw_parts::<u8>(self.data as *const u8, self.size as usize)
         })
     }
 
-    pub fn as_str(&self) -> Option<&str>
-    {
+    pub fn as_str(&self) -> Option<&str> {
         let Some(data) = self.as_slice() else {
             return None;
         };
 
-        Some(unsafe {
-            core::str::from_utf8_unchecked(data)
-        })
+        Some(unsafe { core::str::from_utf8_unchecked(data) })
     }
 }
 
@@ -96,7 +92,7 @@ impl Default for AsyncNatsSlice {
 impl LossyConvert for AsyncNatsSlice {
     fn lossy_convert(&self) -> String {
         String::from_utf8_lossy(unsafe {
-            core::slice::from_raw_parts::<u8>(self.data, self.size as usize)
+            core::slice::from_raw_parts::<u8>(self.data as *const u8, self.size as usize)
         })
         .into()
     }

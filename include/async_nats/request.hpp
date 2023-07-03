@@ -60,8 +60,7 @@ public:
 
   RequestBuilder& data(boost::asio::const_buffer data) noexcept
   {
-    async_nats_request_message(request_,
-                               {reinterpret_cast<const char*>(data.data()), data.size()});
+    async_nats_request_message(request_, AsyncNatsBorrowedMessage {data.data(), data.size()});
     return *this;
   }
 

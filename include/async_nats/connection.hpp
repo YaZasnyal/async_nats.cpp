@@ -8,8 +8,8 @@
 #include <boost/system/error_code.hpp>
 
 #include <async_nats/detail/helpers.hpp>
-#include <async_nats/owned_string.h>
 #include <async_nats/errors.hpp>
+#include <async_nats/owned_string.h>
 #include <async_nats/request.hpp>
 #include <async_nats/subscribtion.hpp>
 #include <async_nats/tokio_runtime.hpp>
@@ -19,7 +19,10 @@ namespace async_nats
 class ConnectionOptions
 {
 public:
-  ConnectionOptions() noexcept { options_ = async_nats_connection_config_new(); }
+  ConnectionOptions() noexcept
+  {
+    options_ = async_nats_connection_config_new();
+  }
 
   ConnectionOptions(const ConnectionOptions&) noexcept = delete;
   ConnectionOptions(ConnectionOptions&& o) noexcept
@@ -63,9 +66,15 @@ public:
     return *this;
   }
 
-  AsyncNatsConnetionParams* get_raw() noexcept { return options_; }
+  AsyncNatsConnetionParams* get_raw() noexcept
+  {
+    return options_;
+  }
 
-  const AsyncNatsConnetionParams* get_raw() const noexcept { return options_; }
+  const AsyncNatsConnetionParams* get_raw() const noexcept
+  {
+    return options_;
+  }
 
 private:
   AsyncNatsConnetionParams* options_;
@@ -79,7 +88,10 @@ public:
   {
   }
 
-  ConnectionError(const ConnectionError& o) { e_ = async_nats_connection_error_clone(o.e_); }
+  ConnectionError(const ConnectionError& o)
+  {
+    e_ = async_nats_connection_error_clone(o.e_);
+  }
 
   ConnectionError(ConnectionError&& o) noexcept
   {
@@ -125,7 +137,10 @@ public:
     return *this;
   }
 
-  AsyncNatsConnectErrorKind kind() const noexcept { return async_nats_connection_error_kind(e_); }
+  AsyncNatsConnectErrorKind kind() const noexcept
+  {
+    return async_nats_connection_error_kind(e_);
+  }
 
   // exception interface
   const char* what() const noexcept override
@@ -163,8 +178,8 @@ public:
   }
 
   RequestError(RequestError&& o) noexcept
-    : e_(o.e_)
-    , str_(std::move(o.str_))
+      : e_(o.e_)
+      , str_(std::move(o.str_))
   {
     o.e_ = nullptr;
   }
@@ -206,7 +221,10 @@ public:
     }
   }
 
-  AsyncNatsRequestErrorKind kind() const noexcept { return async_nats_request_error_kind(e_); }
+  AsyncNatsRequestErrorKind kind() const noexcept
+  {
+    return async_nats_request_error_kind(e_);
+  }
 
   // exception interface
   const char* what() const noexcept override
@@ -245,7 +263,10 @@ public:
   {
   }
 
-  Connection(const Connection& o) noexcept { conn_ = async_nats_connection_clone(o.get_raw()); }
+  Connection(const Connection& o) noexcept
+  {
+    conn_ = async_nats_connection_clone(o.get_raw());
+  }
 
   Connection(Connection&& o) noexcept
   {
@@ -289,11 +310,20 @@ public:
     return *this;
   }
 
-  operator bool() const noexcept { return conn_ != nullptr; }
+  operator bool() const noexcept
+  {
+    return conn_ != nullptr;
+  }
 
-  AsyncNatsConnection* get_raw() noexcept { return conn_; }
+  AsyncNatsConnection* get_raw() noexcept
+  {
+    return conn_;
+  }
 
-  const AsyncNatsConnection* get_raw() const noexcept { return conn_; }
+  const AsyncNatsConnection* get_raw() const noexcept
+  {
+    return conn_;
+  }
 
   /**
    * @brief new_mailbox function generates new random string that can be used for replies
@@ -325,11 +355,10 @@ public:
 
       auto ctx = detail::allocate_ctx(std::move(token));
       const ::AsyncNatsPublishCallback cb {f, ctx};
-      async_nats_connection_publish_async(
-          get_raw(),
-          AsyncNatsSlice {reinterpret_cast<const uint8_t*>(topic.data()), topic.size()},
-          {reinterpret_cast<const char*>(data.data()), data.size()},
-          cb);
+      async_nats_connection_publish_async(get_raw(),
+                                          AsyncNatsSlice {topic.data(), topic.size()},
+                                          AsyncNatsBorrowedMessage {data.data(), data.size()},
+                                          cb);
     };
 
     return boost::asio::async_initiate<CompletionToken, void()>(init, token);
@@ -363,9 +392,9 @@ public:
       const ::AsyncNatsPublishCallback cb {f, ctx};
       async_nats_connection_publish_with_reply_async(
           get_raw(),
-          AsyncNatsSlice {reinterpret_cast<const uint8_t*>(topic.data()), topic.size()},
-          AsyncNatsSlice {reinterpret_cast<const uint8_t*>(reply_to.data()), reply_to.size()},
-          {reinterpret_cast<const char*>(data.data()), data.size()},
+          AsyncNatsSlice {topic.data(), topic.size()},
+          AsyncNatsSlice {reply_to.data(), reply_to.size()},
+          AsyncNatsBorrowedMessage {data.data(), data.size()},
           cb);
     };
 
@@ -419,7 +448,7 @@ public:
       auto ctx = detail::allocate_ctx(std::move(token));
       ::AsyncNatsRequestCallback cb {f, ctx};
       async_nats_connection_request_async(
-          conn_, topic, {reinterpret_cast<const char*>(data.data()), data.size()}, cb);
+          conn_, topic, AsyncNatsBorrowedMessage {data.data(), data.size()}, cb);
     };
 
     return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Message)>(init,

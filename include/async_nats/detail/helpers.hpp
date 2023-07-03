@@ -6,7 +6,6 @@
 
 namespace async_nats::detail
 {
-
 template<class Token>
 inline auto allocate_ctx(Token&& token)
 {

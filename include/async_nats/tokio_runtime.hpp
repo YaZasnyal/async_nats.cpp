@@ -59,9 +59,15 @@ public:
     return *this;
   }
 
-  AsyncNatsTokioRuntimeConfig* get_raw() noexcept { return cfg_; }
+  AsyncNatsTokioRuntimeConfig* get_raw() noexcept
+  {
+    return cfg_;
+  }
 
-  const AsyncNatsTokioRuntimeConfig* get_raw() const noexcept { return cfg_; }
+  const AsyncNatsTokioRuntimeConfig* get_raw() const noexcept
+  {
+    return cfg_;
+  }
 
 private:
   AsyncNatsTokioRuntimeConfig* cfg_;
@@ -108,9 +114,15 @@ public:
     return *this;
   }
 
-  operator bool() const noexcept { return rt_ != nullptr; }
+  operator bool() const noexcept
+  {
+    return rt_ != nullptr;
+  }
 
-  const AsyncNatsTokioRuntime* get_raw() const noexcept { return rt_; }
+  const AsyncNatsTokioRuntime* get_raw() const noexcept
+  {
+    return rt_;
+  }
 
 private:
   AsyncNatsTokioRuntime* rt_;

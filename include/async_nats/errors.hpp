@@ -4,7 +4,6 @@
 
 namespace async_nats
 {
-
 class Exception : public std::exception
 {
 };
