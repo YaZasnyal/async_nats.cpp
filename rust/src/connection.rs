@@ -1,7 +1,5 @@
 use crate::error::AsyncNatsConnectError;
 use crate::tokio_runtime::AsyncNatsTokioRuntime;
-use bytes::BytesMut;
-use std::cell::RefCell;
 
 use crate::api::{
     AsyncNatsAsyncMessage, AsyncNatsAsyncString, AsyncNatsBorrowedString, AsyncNatsOwnedString,
@@ -111,19 +109,8 @@ pub extern "C" fn async_nats_connection_publish_async(
     let data_slice =
         unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
 
-    thread_local! {
-        static BYTES: RefCell<BytesMut> = RefCell::new(bytes::BytesMut::with_capacity(65535));
-    }
-
-    // Have to copy because there is no way to know when bytes object is dropped to
-    // call the callback.
-    // Should wait for `https://github.com/tokio-rs/bytes/issues/437` and think for
-    // better solution depending on implementation
-    let bytes = BYTES.with(|f| {
-        let mut mbytes = f.borrow_mut();
-        mbytes.extend_from_slice(data_slice);
-        mbytes.split_to(data_slice.len()).freeze()
-    });
+    // should be safe because user is required to keep data untill callback is called
+    let bytes = bytes::Bytes::from_static(data_slice);
 
     conn.rt.spawn(async move {
         let cb = cb.clone();
@@ -149,16 +136,8 @@ pub extern "C" fn async_nats_connection_publish_with_reply_async(
     let data_slice =
         unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
 
-    thread_local! {
-        static BYTES: RefCell<BytesMut> = RefCell::new(bytes::BytesMut::with_capacity(65535));
-    }
-
-    // same as async_nats_connection_publish_async
-    let bytes = BYTES.with(|f| {
-        let mut mbytes = f.borrow_mut();
-        mbytes.extend_from_slice(data_slice);
-        mbytes.split_to(data_slice.len()).freeze()
-    });
+    // should be safe because user is required to keep data untill callback is called
+    let bytes = bytes::Bytes::from_static(data_slice);
 
     conn.rt.spawn(async move {
         let cb = cb.clone();

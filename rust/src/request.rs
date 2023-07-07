@@ -30,7 +30,10 @@ pub extern "C" fn async_nats_connection_request_async(
         let message = message;
         let data_slice =
             unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
-        // TODO: Same as async_nats_connection_publish_async
+        // Have to copy because there is no way to know when bytes object is dropped to
+        // call the callback.
+        // Should wait for `https://github.com/tokio-rs/bytes/issues/437` and think for
+        // better solution depending on implementation
         let bytes = bytes::Bytes::copy_from_slice(data_slice);
 
         let response = conn.client.request(topic_str, bytes).await;
@@ -134,7 +137,7 @@ pub extern "C" fn async_nats_request_message(
     let req = unsafe { &mut *req };
     let data_slice =
         unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
-    // TODO: Same as async_nats_connection_publish_async
+    // TODO: Same as async_nats_connection_request_async
     let bytes = bytes::Bytes::copy_from_slice(data_slice);
     req.payload = Some(bytes);
 }

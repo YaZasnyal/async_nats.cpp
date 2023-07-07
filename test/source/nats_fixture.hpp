@@ -5,7 +5,6 @@
 class NatsFixture : public ::testing::Test
 {
 public:
-  inline static const async_nats::TokioRuntime rt = async_nats::TokioRuntime();
   inline static constexpr auto test_timeout = std::chrono::seconds(1);
   inline static constexpr auto default_sleep = std::chrono::milliseconds(20);
 
@@ -20,5 +19,6 @@ public:
   void SetUp() override;
   void TearDown() override;
 
+  async_nats::TokioRuntime rt;
   async_nats::Connection c;
 };
