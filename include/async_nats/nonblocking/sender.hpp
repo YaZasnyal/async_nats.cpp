@@ -88,15 +88,9 @@ public:
     return *this;
   }
 
-  AsyncNatsNamedSender* get_raw() noexcept
-  {
-    return sender_;
-  }
+  AsyncNatsNamedSender* get_raw() noexcept { return sender_; }
 
-  const AsyncNatsNamedSender* get_raw() const noexcept
-  {
-    return sender_;
-  }
+  const AsyncNatsNamedSender* get_raw() const noexcept { return sender_; }
 
   /**
    * @brief try_send - pushes data to the send queue if there is space available

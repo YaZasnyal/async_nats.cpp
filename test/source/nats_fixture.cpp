@@ -2,9 +2,9 @@
 
 #include <boost/asio/use_future.hpp>
 
-NatsFixture::NatsFixture() {}
+NatsFixture::NatsFixture() = default;
 
-NatsFixture::~NatsFixture() {}
+NatsFixture::~NatsFixture() = default;
 
 void NatsFixture::SetUp()
 {

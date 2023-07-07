@@ -2,7 +2,7 @@
 
 #include "nats_fixture.hpp"
 
-TEST_F(NatsFixture, reply_to)
+TEST_F(NatsFixture, ReplyTo)
 {
   auto m = c.new_mailbox();
   auto sub = c.subcribe(m, boost::asio::use_future).get();
@@ -36,7 +36,7 @@ TEST_F(NatsFixture, reply_to)
   GTEST_ASSERT_EQ(res.reply_to(), std::nullopt);
 }
 
-TEST_F(NatsFixture, reply_to_no_responders)
+TEST_F(NatsFixture, ReplyToNoResponders)
 {
   auto m = c.new_mailbox();
   auto reply_m = c.new_mailbox();

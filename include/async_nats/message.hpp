@@ -53,10 +53,7 @@ public:
     return *this;
   }
 
-  size_t size() const noexcept
-  {
-    return size_;
-  }
+  size_t size() const noexcept { return size_; }
 
   std::string_view at(size_t index) const
   {
@@ -99,15 +96,9 @@ public:
       }
     }
 
-    bool operator==(const Iterator& o) const noexcept
-    {
-      return pos_ == o.pos_;
-    }
+    bool operator==(const Iterator& o) const noexcept { return pos_ == o.pos_; }
 
-    bool operator!=(const Iterator& o) const noexcept
-    {
-      return !(pos_ == o.pos_);
-    }
+    bool operator!=(const Iterator& o) const noexcept { return !(pos_ == o.pos_); }
 
     std::string_view operator*() const
     {
@@ -133,15 +124,9 @@ public:
     size_t size_ = 0;
   };
 
-  Iterator begin() const noexcept
-  {
-    return Iterator(it_, 0, size_);
-  }
+  Iterator begin() const noexcept { return Iterator(it_, 0, size_); }
 
-  Iterator end() const noexcept
-  {
-    return Iterator(it_, size_, size_);
-  }
+  Iterator end() const noexcept { return Iterator(it_, size_, size_); }
 
 private:
   friend class HeadersView;
@@ -218,15 +203,9 @@ public:
       }
     }
 
-    bool operator==(HeaderIterator& o) const noexcept
-    {
-      return o.it_ != it_;
-    }
+    bool operator==(HeaderIterator& o) const noexcept { return o.it_ != it_; }
 
-    bool operator!=(HeaderIterator& o) const noexcept
-    {
-      return !(o.it_ == it_);
-    }
+    bool operator!=(HeaderIterator& o) const noexcept { return !(o.it_ == it_); }
 
   private:
     friend class HeadersView;
@@ -276,10 +255,7 @@ public:
   /**
    * @brief operator bool allows to theck if there are any headers in the message
    */
-  operator bool() const noexcept
-  {
-    return async_nats_message_has_headers(message_);
-  }
+  operator bool() const noexcept { return async_nats_message_has_headers(message_); }
 
   std::optional<HeaderVectorView> get_header(std::string_view header) noexcept
   {
@@ -309,10 +285,7 @@ public:
     return HeaderIterator(async_nats_message_header_iterator(message_));
   }
 
-  static HeaderIterator end() noexcept
-  {
-    return HeaderIterator();
-  }
+  static HeaderIterator end() noexcept { return HeaderIterator(); }
 
   // end
 
@@ -412,10 +385,7 @@ public:
     return *this;
   }
 
-  operator bool() const noexcept
-  {
-    return message_ != nullptr;
-  }
+  operator bool() const noexcept { return message_ != nullptr; }
 
   std::string_view topic() const noexcept
   {
@@ -441,10 +411,7 @@ public:
     return std::nullopt;
   }
 
-  HeadersView headers() const noexcept
-  {
-    return HeadersView(message_);
-  }
+  HeadersView headers() const noexcept { return HeadersView(message_); }
 
   /**
    * @brief status returns optional status of the message. Used mostly for internal handling
@@ -470,10 +437,7 @@ public:
   /**
    * @brief length returns length of the message over the wire
    */
-  uint64_t length() const noexcept
-  {
-    return async_nats_message_length(message_);
-  }
+  uint64_t length() const noexcept { return async_nats_message_length(message_); }
 
   OwnedString to_string() const noexcept
   {

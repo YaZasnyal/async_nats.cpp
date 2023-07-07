@@ -81,7 +81,7 @@ endif()
 
 target_link_libraries(async_nats_async_nats
   INTERFACE
-  Boost::boost
+  Boost::headers
   $<IF:$<BOOL:${ASYNC_NATS_SHARED}>,nats_fabric-shared,nats_fabric>
 
   # windows

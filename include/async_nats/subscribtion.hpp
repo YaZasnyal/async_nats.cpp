@@ -137,15 +137,9 @@ public:
     return *this;
   }
 
-  operator bool() const noexcept
-  {
-    return sub_ != nullptr;
-  }
+  operator bool() const noexcept { return sub_ != nullptr; }
 
-  AsyncNatsSubscribtion* get_raw() noexcept
-  {
-    return sub_;
-  }
+  AsyncNatsSubscribtion* get_raw() noexcept { return sub_; }
 
   AsyncNatsSubscribtion* release_raw() noexcept
   {
@@ -164,9 +158,9 @@ public:
   }
 
   template<class CompletionToken>
-  auto receive(CompletionToken&& token)
+  auto receive(CompletionToken&& completion_token)
   {
-    auto init = [&](auto token)
+    auto init = [this](auto token)
     {
       using CH = std::decay_t<decltype(token)>;
 
@@ -182,7 +176,7 @@ public:
       async_nats_subscribtion_receive_async(get_raw(), cb);
     };
 
-    return boost::asio::async_initiate<CompletionToken, void(Message)>(init, token);
+    return boost::asio::async_initiate<CompletionToken, void(Message)>(init, completion_token);
   }
 
 private:

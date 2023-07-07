@@ -41,7 +41,7 @@
       "name": "cppcheck",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_CPPCHECK": "cppcheck;--inline-suppr"
+        "CMAKE_CXX_CPPCHECK": "cppcheck;--inline-suppr;--suppressions-list=${sourceDir}/CppCheckSuppressions.txt"
       }
     },
     {

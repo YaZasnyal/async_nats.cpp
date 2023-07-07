@@ -2,22 +2,22 @@
 
 #include "nats_fixture.hpp"
 
-TEST_F(NatsFixture, nonblocking_send_recv)
+TEST_F(NatsFixture, NonblockingSendRecv)
 {
   auto m = c.new_mailbox();
   auto sub = c.subcribe(m, boost::asio::use_future).get();
   auto token = sub.get_cancellation_token();
 
-  async_nats::nonblocking::Receiver nb_recv(std::move(sub));
+  const async_nats::nonblocking::Receiver nb_recv(std::move(sub));
 
-  async_nats::nonblocking::Sender nb_snd(m, c);
+  const async_nats::nonblocking::Sender nb_snd(m, c);
 
   std::string message = "test";
   nb_snd.try_send(boost::asio::const_buffer(message.data(), message.size()));
   nb_snd.send(boost::asio::const_buffer(message.data(), message.size()));
 
   // give some time for server to send message back
-  std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  std::this_thread::sleep_for(default_sleep);
 
   auto msg = nb_recv.receive();
   GTEST_ASSERT_EQ(msg, true);

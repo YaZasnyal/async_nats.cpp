@@ -3,7 +3,7 @@
 #include "nats_fixture.hpp"
 
 /// Check if cancel works if subscribtion is cancelled instantly
-TEST_F(NatsFixture, subscribtion_cancellation_token_instant)
+TEST_F(NatsFixture, SubscribtionCancellationTokenInstant)
 {
   auto m = c.new_mailbox();
   auto sub = c.subcribe(m, boost::asio::use_future).get();
@@ -14,7 +14,7 @@ TEST_F(NatsFixture, subscribtion_cancellation_token_instant)
 }
 
 /// Check if cancel works if subscribtion is cancelled from another thread
-TEST_F(NatsFixture, subscribtion_cancellation_token)
+TEST_F(NatsFixture, SubscribtionCancellationToken)
 {
   auto m = c.new_mailbox();
   auto sub = c.subcribe(m, boost::asio::use_future).get();
@@ -28,7 +28,7 @@ TEST_F(NatsFixture, subscribtion_cancellation_token)
 }
 
 /// Check if cancel allows to read remaining messages
-TEST_F(NatsFixture, subscribtion_cancellation_token_drain)
+TEST_F(NatsFixture, SubscribtionCancellationTokenDrain)
 {
   auto m = c.new_mailbox();
   auto sub = c.subcribe(m, boost::asio::use_future).get();
@@ -36,7 +36,7 @@ TEST_F(NatsFixture, subscribtion_cancellation_token_drain)
 
   c.publish(m, boost::asio::const_buffer(), boost::asio::use_future).get();
   // give some time for server to send message back
-  std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  std::this_thread::sleep_for(default_sleep);
 
   token.cancel();
   auto msg = sub.receive(boost::asio::use_future).get();

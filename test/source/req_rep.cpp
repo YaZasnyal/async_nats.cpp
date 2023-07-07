@@ -2,7 +2,7 @@
 
 #include "nats_fixture.hpp"
 
-TEST_F(NatsFixture, req_rep)
+TEST_F(NatsFixture, ReqRep)
 {
   auto m = c.new_mailbox();
   auto sub = c.subcribe(m, boost::asio::use_future).get();
@@ -29,7 +29,7 @@ TEST_F(NatsFixture, req_rep)
   GTEST_ASSERT_EQ(response.data(), reply);
 }
 
-TEST_F(NatsFixture, req_rep_no_responder)
+TEST_F(NatsFixture, ReqRepNoResponder)
 {
   auto m = c.new_mailbox();
   std::string request = "test";
@@ -41,14 +41,14 @@ TEST_F(NatsFixture, req_rep_no_responder)
   bool exception = false;
   try {
     auto response = req.get();
-  } catch (async_nats::RequestError e) {
+  } catch (const async_nats::RequestError& e) {
     GTEST_ASSERT_EQ(e.kind(), AsyncNatsRequestErrorKind::AsyncNats_Request_NoResponders);
     exception = true;
   }
   GTEST_ASSERT_EQ(exception, true);
 }
 
-TEST_F(NatsFixture, req_rep_timeout)
+TEST_F(NatsFixture, ReqRepTimeout)
 {
   auto m = c.new_mailbox();
   auto sub = c.subcribe(m, boost::asio::use_future).get();
@@ -60,10 +60,10 @@ TEST_F(NatsFixture, req_rep_timeout)
         c.request(m,
                   std::move(async_nats::RequestBuilder()
                                 .data(boost::asio::const_buffer(request.data(), request.size()))
-                                .timeout(std::chrono::milliseconds(20))),
+                                .timeout(default_sleep)),
                   boost::asio::use_future)
             .get();
-  } catch (async_nats::RequestError e) {
+  } catch (const async_nats::RequestError& e) {
     GTEST_ASSERT_EQ(e.kind(), AsyncNatsRequestErrorKind::AsyncNats_Request_TimedOut);
     exception = true;
   }

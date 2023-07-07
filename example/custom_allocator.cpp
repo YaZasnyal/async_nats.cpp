@@ -1,23 +1,20 @@
 #include <iostream>
 #include <thread>
 
+#include <boost/asio.hpp>
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/recycling_allocator.hpp>
 
 #include <async_nats/async_nats.hpp>
 
-#define BOOST_ASIO_HAS_CO_AWAIT
+boost::asio::awaitable<void> example_task(async_nats::TokioRuntime& rt);
 
-#include <boost/asio.hpp>
-#include <boost/asio/co_spawn.hpp>
-
-boost::asio::awaitable<void> example_task(async_nats::TokioRuntime& conn);
-
-auto main(int, char**) -> int
+auto main(int /*argc*/, char** /*argv*/) -> int
 {
-  async_nats::TokioRuntime rt;
-  boost::asio::io_context ctx;
-
   try {
+    async_nats::TokioRuntime rt;
+    boost::asio::io_context ctx;
+
     auto res = boost::asio::co_spawn(ctx, example_task(rt), boost::asio::use_future);
     ctx.run();
     res.get();
@@ -25,6 +22,9 @@ auto main(int, char**) -> int
     std::cerr << "ConnectionError: type=" << e.kind() << "; text='" << e.what() << "'"
               << std::endl;
     return -1;
+  } catch (const std::exception& e) {
+    std::cerr << "Exception: text='" << e.what() << "'" << std::endl;
+    return -2;
   }
 
   return 0;
@@ -62,7 +62,9 @@ boost::asio::awaitable<void> example_task(async_nats::TokioRuntime& rt)
 
   // read the message from the sub
   async_nats::Message msg = co_await sub.receive(token());
-  if (!msg)
+  if (!msg) {
     co_return;
+  }
   std::cout << msg.topic() << ": " << msg.data() << std::endl;
+  co_return;
 }

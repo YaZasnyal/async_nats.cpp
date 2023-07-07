@@ -2,7 +2,7 @@
 
 #include "nats_fixture.hpp"
 
-TEST_F(NatsFixture, client_send_recv_future)
+TEST_F(NatsFixture, ClientSendRecvFuture)
 {
   auto m = c.new_mailbox();
   auto sub = c.subcribe(m, boost::asio::use_future).get();

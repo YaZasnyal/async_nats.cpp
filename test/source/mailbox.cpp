@@ -1,7 +1,7 @@
 #include "nats_fixture.hpp"
 
 /// Test if two mailboxes are different
-TEST_F(NatsFixture, mailbox)
+TEST_F(NatsFixture, Mailbox)
 {
   auto box1 = c.new_mailbox();
   auto box2 = c.new_mailbox();

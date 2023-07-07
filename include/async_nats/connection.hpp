@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <string_view>
 
@@ -19,10 +20,7 @@ namespace async_nats
 class ConnectionOptions
 {
 public:
-  ConnectionOptions() noexcept
-  {
-    options_ = async_nats_connection_config_new();
-  }
+  ConnectionOptions() noexcept { options_ = async_nats_connection_config_new(); }
 
   ConnectionOptions(const ConnectionOptions&) noexcept = delete;
   ConnectionOptions(ConnectionOptions&& o) noexcept
@@ -66,15 +64,9 @@ public:
     return *this;
   }
 
-  AsyncNatsConnetionParams* get_raw() noexcept
-  {
-    return options_;
-  }
+  AsyncNatsConnetionParams* get_raw() noexcept { return options_; }
 
-  const AsyncNatsConnetionParams* get_raw() const noexcept
-  {
-    return options_;
-  }
+  const AsyncNatsConnetionParams* get_raw() const noexcept { return options_; }
 
 private:
   AsyncNatsConnetionParams* options_;
@@ -88,10 +80,7 @@ public:
   {
   }
 
-  ConnectionError(const ConnectionError& o)
-  {
-    e_ = async_nats_connection_error_clone(o.e_);
-  }
+  ConnectionError(const ConnectionError& o) { e_ = async_nats_connection_error_clone(o.e_); }
 
   ConnectionError(ConnectionError&& o) noexcept
   {
@@ -137,10 +126,7 @@ public:
     return *this;
   }
 
-  AsyncNatsConnectErrorKind kind() const noexcept
-  {
-    return async_nats_connection_error_kind(e_);
-  }
+  AsyncNatsConnectErrorKind kind() const noexcept { return async_nats_connection_error_kind(e_); }
 
   // exception interface
   const char* what() const noexcept override
@@ -221,10 +207,7 @@ public:
     }
   }
 
-  AsyncNatsRequestErrorKind kind() const noexcept
-  {
-    return async_nats_request_error_kind(e_);
-  }
+  AsyncNatsRequestErrorKind kind() const noexcept { return async_nats_request_error_kind(e_); }
 
   // exception interface
   const char* what() const noexcept override
@@ -263,10 +246,7 @@ public:
   {
   }
 
-  Connection(const Connection& o) noexcept
-  {
-    conn_ = async_nats_connection_clone(o.get_raw());
-  }
+  Connection(const Connection& o) noexcept { conn_ = async_nats_connection_clone(o.get_raw()); }
 
   Connection(Connection&& o) noexcept
   {
@@ -310,20 +290,11 @@ public:
     return *this;
   }
 
-  operator bool() const noexcept
-  {
-    return conn_ != nullptr;
-  }
+  operator bool() const noexcept { return conn_ != nullptr; }
 
-  AsyncNatsConnection* get_raw() noexcept
-  {
-    return conn_;
-  }
+  AsyncNatsConnection* get_raw() noexcept { return conn_; }
 
-  const AsyncNatsConnection* get_raw() const noexcept
-  {
-    return conn_;
-  }
+  const AsyncNatsConnection* get_raw() const noexcept { return conn_; }
 
   /**
    * @brief new_mailbox function generates new random string that can be used for replies
@@ -335,14 +306,16 @@ public:
 
   /**
    * @brief publish
-   * @param topic
+   * @param subject
    * @param data
    * @param token
    */
   template<class CompletionToken>
-  auto publish(std::string_view topic, boost::asio::const_buffer data, CompletionToken&& token)
+  auto publish(std::string_view subject,
+               boost::asio::const_buffer data,
+               CompletionToken&& completion_token)
   {
-    auto init = [&](auto token)
+    auto init = [this](auto token, auto i_subject, auto i_data)
     {
       using CH = std::decay_t<decltype(token)>;
 
@@ -356,28 +329,29 @@ public:
       auto ctx = detail::allocate_ctx(std::move(token));
       const ::AsyncNatsPublishCallback cb {f, ctx};
       async_nats_connection_publish_async(get_raw(),
-                                          AsyncNatsSlice {topic.data(), topic.size()},
-                                          AsyncNatsBorrowedMessage {data.data(), data.size()},
+                                          AsyncNatsSlice {i_subject.data(), i_subject.size()},
+                                          AsyncNatsBorrowedMessage {i_data.data(), i_data.size()},
                                           cb);
     };
 
-    return boost::asio::async_initiate<CompletionToken, void()>(init, token);
+    return boost::asio::async_initiate<CompletionToken, void()>(
+        init, completion_token, subject, data);
   }
 
   /**
    * @brief publish - publish a new message with reply address
-   * @param topic
+   * @param subject
    * @param reply_to - a topic for the reply message
    * @param data
    * @param token
    */
   template<class CompletionToken>
-  auto publish(std::string_view topic,
+  auto publish(std::string_view subject,
                std::string_view reply_to,
                boost::asio::const_buffer data,
-               CompletionToken&& token)
+               CompletionToken&& completion_token)
   {
-    auto init = [&](auto token)
+    auto init = [this](auto token, auto i_subject, auto i_reply_to, auto i_data)
     {
       using CH = std::decay_t<decltype(token)>;
 
@@ -392,21 +366,22 @@ public:
       const ::AsyncNatsPublishCallback cb {f, ctx};
       async_nats_connection_publish_with_reply_async(
           get_raw(),
-          AsyncNatsSlice {topic.data(), topic.size()},
-          AsyncNatsSlice {reply_to.data(), reply_to.size()},
-          AsyncNatsBorrowedMessage {data.data(), data.size()},
+          AsyncNatsSlice {i_subject.data(), i_subject.size()},
+          AsyncNatsSlice {i_reply_to.data(), i_reply_to.size()},
+          AsyncNatsBorrowedMessage {i_data.data(), i_data.size()},
           cb);
     };
 
-    return boost::asio::async_initiate<CompletionToken, void()>(init, token);
+    return boost::asio::async_initiate<CompletionToken, void()>(
+        init, completion_token, subject, reply_to, data);
   }
 
   /// @todo TODO: publish with headers and reply target
 
   template<class CompletionToken>
-  auto subcribe(AsyncNatsAsyncString topic, CompletionToken&& token)
+  auto subcribe(AsyncNatsAsyncString subject, CompletionToken&& completion_token)
   {
-    auto init = [&](auto token, AsyncNatsAsyncString topic)
+    auto init = [this](auto token, AsyncNatsAsyncString i_subject)
     {
       using CH = std::decay_t<decltype(token)>;
 
@@ -420,16 +395,19 @@ public:
 
       auto ctx = detail::allocate_ctx(std::move(token));
       const ::AsyncNatsSubscribeCallback cb {f, ctx};
-      async_nats_connection_subscribe_async(get_raw(), topic, cb);
+      async_nats_connection_subscribe_async(get_raw(), i_subject, cb);
     };
 
-    return boost::asio::async_initiate<CompletionToken, void(Subscribtion)>(init, token, topic);
+    return boost::asio::async_initiate<CompletionToken, void(Subscribtion)>(
+        init, completion_token, subject);
   }
 
   template<class CompletionToken>
-  auto request(AsyncNatsAsyncString topic, boost::asio::const_buffer data, CompletionToken&& token)
+  auto request(AsyncNatsAsyncString subject,
+               boost::asio::const_buffer data,
+               CompletionToken&& completion_token)
   {
-    auto init = [&](auto token)
+    auto init = [this](auto token, auto i_subject, auto i_data)
     {
       using CH = std::decay_t<decltype(token)>;
 
@@ -446,19 +424,21 @@ public:
       };
 
       auto ctx = detail::allocate_ctx(std::move(token));
-      ::AsyncNatsRequestCallback cb {f, ctx};
+      const ::AsyncNatsRequestCallback cb {f, ctx};
       async_nats_connection_request_async(
-          conn_, topic, AsyncNatsBorrowedMessage {data.data(), data.size()}, cb);
+          conn_, i_subject, AsyncNatsBorrowedMessage {i_data.data(), i_data.size()}, cb);
     };
 
-    return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Message)>(init,
-                                                                                           token);
+    return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Message)>(
+        init, completion_token, subject, data);
   }
 
   template<class CompletionToken>
-  auto request(AsyncNatsAsyncString topic, RequestBuilder&& req, CompletionToken&& token)
+  auto request(AsyncNatsAsyncString subject,
+               RequestBuilder&& req,
+               CompletionToken&& completion_token)
   {
-    auto init = [&](auto token)
+    auto init = [this](auto token, auto i_subject, RequestBuilder&& req_builder)
     {
       using CH = std::decay_t<decltype(token)>;
 
@@ -470,17 +450,16 @@ public:
         } else {
           (*c)(nullptr, Message(msg));
         }
-
         detail::deallocate_ctx(c);
       };
 
       auto ctx = detail::allocate_ctx(std::move(token));
-      ::AsyncNatsRequestCallback cb {f, ctx};
-      async_nats_connection_send_request_async(conn_, topic, req.release(), cb);
+      const ::AsyncNatsRequestCallback cb {f, ctx};
+      async_nats_connection_send_request_async(conn_, i_subject, req_builder.release(), cb);
     };
 
-    return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Message)>(init,
-                                                                                           token);
+    return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Message)>(
+        init, completion_token, subject, std::move(req));
   }
 
 private:
@@ -498,9 +477,13 @@ private:
  * @param token - asio completion token
  */
 template<class CompletionToken>
-auto connect(const TokioRuntime& rt, const ConnectionOptions& options, CompletionToken&& token)
+auto connect(const TokioRuntime& rt,
+             const ConnectionOptions& options,
+             CompletionToken&& completion_token)
 {
-  auto init = [&](auto token)
+  auto init = [](auto token,
+                 std::reference_wrapper<const TokioRuntime> i_rt,
+                 std::reference_wrapper<const ConnectionOptions> i_options)
   {
     using CH = std::decay_t<decltype(token)>;
 
@@ -518,11 +501,11 @@ auto connect(const TokioRuntime& rt, const ConnectionOptions& options, Completio
 
     auto ctx = detail::allocate_ctx(std::move(token));
     const ::AsyncNatsConnectCallback cb {f, ctx};
-    async_nats_connection_connect(rt.get_raw(), options.get_raw(), cb);
+    async_nats_connection_connect(i_rt.get().get_raw(), i_options.get().get_raw(), cb);
   };
 
-  return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Connection)>(init,
-                                                                                            token);
+  return boost::asio::async_initiate<CompletionToken, void(std::exception_ptr, Connection)>(
+      init, completion_token, std::cref(rt), std::cref(options));
 }
 
 }  // namespace async_nats

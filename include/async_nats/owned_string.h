@@ -50,15 +50,9 @@ public:
     return *this;
   }
 
-  operator AsyncNatsAsyncString() const noexcept
-  {
-    return s_;
-  }
+  operator AsyncNatsAsyncString() const noexcept { return s_; }
 
-  operator std::string_view() const noexcept
-  {
-    return s_;
-  }
+  operator std::string_view() const noexcept { return s_; }
 
 private:
   char* s_ = nullptr;

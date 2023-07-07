@@ -2,12 +2,10 @@
 #include <iostream>
 #include <thread>
 
-#include <async_nats/async_nats.hpp>
-
-#define BOOST_ASIO_HAS_CO_AWAIT
-
 #include <boost/asio.hpp>
 #include <boost/asio/co_spawn.hpp>
+
+#include <async_nats/async_nats.hpp>
 
 boost::asio::awaitable<void> example_task(async_nats::Connection conn);
 
@@ -65,4 +63,5 @@ boost::asio::awaitable<void> example_task(async_nats::Connection conn)
     co_return;
   }
   std::cout << msg.topic() << ": " << msg.data() << std::endl;
+  co_return;
 }

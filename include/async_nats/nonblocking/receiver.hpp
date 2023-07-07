@@ -76,10 +76,7 @@ public:
    *
    * @return A new message
    */
-  Message receive() const noexcept
-  {
-    return Message(async_nats_named_receiver_recv(receiver_));
-  }
+  Message receive() const noexcept { return Message(async_nats_named_receiver_recv(receiver_)); }
 
   /**
    * @brief try_receive checks if message is available

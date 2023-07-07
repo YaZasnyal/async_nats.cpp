@@ -1,3 +1,4 @@
+// NOLINTBEGIN
 #pragma once
 
 #include <type_traits>
@@ -31,3 +32,4 @@ inline void deallocate_ctx(Token* token)
 }
 
 }  // namespace async_nats::detail
+// NOLINEND
