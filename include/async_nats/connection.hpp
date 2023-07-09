@@ -475,6 +475,9 @@ private:
  * @param rt - Tokio runtime object
  * @param options - connection options
  * @param token - asio completion token
+ *
+ * @note options must live untill completion untill the very end of the 
+ * asynchronous operation.
  */
 template<class CompletionToken>
 auto connect(const TokioRuntime& rt,

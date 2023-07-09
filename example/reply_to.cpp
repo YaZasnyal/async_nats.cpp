@@ -14,12 +14,10 @@ auto main(int /*argc*/, char** /*argv*/) -> int
     const async_nats::TokioRuntime rt;
     boost::asio::io_context ctx;
 
+    async_nats::ConnectionOptions options;
+    options.name("test_app").address("nats://localhost:4222");
     const async_nats::Connection conn =
-        async_nats::connect(
-            rt,
-            async_nats::ConnectionOptions().name("test_app").address("nats://localhost:4222"),
-            boost::asio::use_future)
-            .get();
+        async_nats::connect(rt, options, boost::asio::use_future).get();
     auto req = boost::asio::co_spawn(ctx, requester(ctx, conn), boost::asio::use_future);
     ctx.run();
     req.get();

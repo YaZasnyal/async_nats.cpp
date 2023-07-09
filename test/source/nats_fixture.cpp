@@ -8,10 +8,9 @@ NatsFixture::~NatsFixture() = default;
 
 void NatsFixture::SetUp()
 {
-  c = async_nats::connect(rt,
-                          async_nats::ConnectionOptions().address("nats://localhost:4222"),
-                          boost::asio::use_future)
-          .get();
+  async_nats::ConnectionOptions options;
+  options.address("nats://localhost:4222");
+  c = async_nats::connect(rt, options, boost::asio::use_future).get();
   GTEST_ASSERT_NE(c.get_raw(), nullptr);
 }
 

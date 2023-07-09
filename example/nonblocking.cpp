@@ -11,12 +11,10 @@ auto main(int /*argc*/, char** /*argv*/) -> int
     const boost::asio::io_context ctx;
 
     // connect to the nats server
+    async_nats::ConnectionOptions options;
+    options.name("test_app").address("nats://localhost:4222");
     async_nats::Connection connection =
-        async_nats::connect(
-            rt,
-            async_nats::ConnectionOptions().name("test_app").address("nats://localhost:4222"),
-            boost::asio::use_future)
-            .get();
+        async_nats::connect(rt, options, boost::asio::use_future).get();
 
     // generate random topic
     const async_nats::OwnedString mailbox = connection.new_mailbox();

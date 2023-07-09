@@ -49,8 +49,9 @@ inline auto token()
 
 boost::asio::awaitable<void> example_task(async_nats::TokioRuntime& rt)
 {
-  async_nats::Connection conn = co_await async_nats::connect(
-      rt, async_nats::ConnectionOptions().address("nats://localhost:4222"), token());
+  async_nats::ConnectionOptions options;
+  options.name("test_app").address("nats://localhost:4222");
+  async_nats::Connection conn = co_await async_nats::connect(rt, options, token());
 
   // subscribe for messages
   async_nats::Subscribtion sub = co_await conn.subcribe("test", token());
