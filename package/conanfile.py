@@ -7,11 +7,11 @@ from conan.tools.files import rename
 class AsyncNatsCppConan(ConanFile):
     name = "async_nats"
     version = "0.1.0"
-    license = "<Put the package license here>"
-    author = "<Put your name here> <And your email here>"
-    url = "<Package recipe repository url here, for issues about the package>"
-    description = "<Description of AsyncNatsCpp here>"
-    topics = ("<Put some tag here>", "<here>", "<and here>")
+    license = "MIT"
+    author = "Artem Vasiliev conan@yazasnyal.dev"
+    url = "https://github.com/YaZasnyal/async_nats.cpp"
+    description = "Binding to the async_nats.rs library"
+    topics = ("asio", "nats", "messaging")
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
@@ -38,7 +38,8 @@ class AsyncNatsCppConan(ConanFile):
         if self.options.shared:
             self.copy("nats_fabric.dll", dst="bin", keep_path=False)
             self.copy("nats_fabric.dll.lib", dst="lib", keep_path=False)
-            rename(self,
+            rename(
+                self,
                 os.path.join(self.package_folder, "lib", "nats_fabric.dll.lib"),
                 os.path.join(self.package_folder, "lib", "nats_fabric.lib"),
             )
