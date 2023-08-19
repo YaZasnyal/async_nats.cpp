@@ -89,6 +89,7 @@ target_link_libraries(async_nats_async_nats
   $<$<BOOL:${WIN32}>:Crypt32>
   $<$<BOOL:${WIN32}>:Ncrypt>
   $<$<BOOL:${WIN32}>:Secur32>
+  $<$<BOOL:${WIN32}>:ws2_32>
 
   # macos
   $<$<BOOL:${APPLE}>:${SECURITY_FRAMEWORK}>

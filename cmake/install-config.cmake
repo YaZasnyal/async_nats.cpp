@@ -1,5 +1,5 @@
 include(CMakeFindDependencyMacro)
-find_dependency(fmt)
+find_dependency(Boost)
 
 option(ASYNC_NATS_SHARED "Link shared library by default" ON)
 
