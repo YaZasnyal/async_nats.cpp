@@ -20,7 +20,7 @@ class AsyncNatsCppConan(ConanFile):
     no_copy_source = True
 
     def requirements(self):
-        self.requires("boost/1.81.0")
+        self.requires("boost/1.79.0")
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -51,6 +51,7 @@ class AsyncNatsCppConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["nats_fabric"]
+        self.cpp_info.requires = ["boost::headers"]
         if self.settings.os in ["Linux", "FreeBSD"]:
             pass
         elif self.settings.os == "Windows":
