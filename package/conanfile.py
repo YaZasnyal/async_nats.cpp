@@ -36,13 +36,14 @@ class AsyncNatsCppConan(ConanFile):
         self.copy("*.hpp", dst="include", src="include")
 
         if self.options.shared:
-            self.copy("nats_fabric.dll", dst="bin", keep_path=False)
-            self.copy("nats_fabric.dll.lib", dst="lib", keep_path=False)
-            rename(
-                self,
-                os.path.join(self.package_folder, "lib", "nats_fabric.dll.lib"),
-                os.path.join(self.package_folder, "lib", "nats_fabric.lib"),
-            )
+            if self.settings.os == "Windows":
+                self.copy("nats_fabric.dll", dst="bin", keep_path=False)
+                self.copy("nats_fabric.dll.lib", dst="lib", keep_path=False)
+                rename(
+                    self,
+                    os.path.join(self.package_folder, "lib", "nats_fabric.dll.lib"),
+                    os.path.join(self.package_folder, "lib", "nats_fabric.lib"),
+                )
             self.copy("libnats_fabric.so", dst="lib", keep_path=False)
             self.copy("nats_fabric.dylib*", dst="lib", keep_path=False)
         else:
