@@ -1,13 +1,14 @@
 use crate::error::AsyncNatsConnectError;
 use crate::tokio_runtime::AsyncNatsTokioRuntime;
-
 use crate::api::{
     AsyncNatsAsyncMessage, AsyncNatsAsyncString, AsyncNatsBorrowedString, AsyncNatsOwnedString,
     AsyncNatsSlice, LossyConvert,
 };
 use crate::subscribtion::AsyncNatsSubscribtion;
 use async_nats::{connect_with_options, Client, ConnectOptions, ServerAddr};
+use bytes::BytesMut;
 use core::slice;
+use std::cell::RefCell;
 use std::ffi::c_void;
 
 #[derive(Clone)]
@@ -109,8 +110,19 @@ pub extern "C" fn async_nats_connection_publish_async(
     let data_slice =
         unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
 
-    // should be safe because user is required to keep data untill callback is called
-    let bytes = bytes::Bytes::from_static(data_slice);
+    thread_local! {
+        static BYTES: RefCell<BytesMut> = RefCell::new(bytes::BytesMut::with_capacity(65535));
+    }
+
+    // Have to copy because there is no way to know when bytes object is dropped to
+    // call the callback.
+    // Should wait for `https://github.com/tokio-rs/bytes/issues/437` and think for
+    // better solution depending on implementation
+    let bytes = BYTES.with(|f| {
+        let mut mbytes = f.borrow_mut();
+        mbytes.extend_from_slice(data_slice);
+        mbytes.split_to(data_slice.len()).freeze()
+    });
 
     conn.rt.spawn(async move {
         let cb = cb.clone();
@@ -136,8 +148,19 @@ pub extern "C" fn async_nats_connection_publish_with_reply_async(
     let data_slice =
         unsafe { slice::from_raw_parts(message.0 as *const u8, message.1.try_into().unwrap()) };
 
-    // should be safe because user is required to keep data untill callback is called
-    let bytes = bytes::Bytes::from_static(data_slice);
+    thread_local! {
+        static BYTES: RefCell<BytesMut> = RefCell::new(bytes::BytesMut::with_capacity(65535));
+    }
+
+    // Have to copy because there is no way to know when bytes object is dropped to
+    // call the callback.
+    // Should wait for `https://github.com/tokio-rs/bytes/issues/437` and think for
+    // better solution depending on implementation
+    let bytes = BYTES.with(|f| {
+        let mut mbytes = f.borrow_mut();
+        mbytes.extend_from_slice(data_slice);
+        mbytes.split_to(data_slice.len()).freeze()
+    });
 
     conn.rt.spawn(async move {
         let cb = cb.clone();
